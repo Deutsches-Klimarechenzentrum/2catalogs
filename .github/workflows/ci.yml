@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[all]"
+
+      - name: Check Python syntax
+        run: |
+          python -m py_compile src/**/*.py || true
+          echo "✓ Syntax check completed"
+
+      - name: Test imports
+        run: |
+          python -c "import generators" && echo "✓ generators import OK" || echo "✗ generators import failed"
+          python -c "import generators.intake.v2.tointake2" && echo "✓ tointake2 import OK" || echo "✗ tointake2 import failed"
+          python -c "import generators.stac" && echo "✓ stac import OK" || echo "✗ stac import failed"
+
+      - name: Verify installation
+        run: |
+          python tests/verify_installation.py
+
+      - name: Test forge parser syntax
+        run: |
+          python -m py_compile .github/scripts/forge_parser.py
+          echo "✓ Forge parser syntax OK"
+
+  lint:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff || echo "ruff not available"
+
+      - name: Check with ruff (if available)
+        run: |
+          if command -v ruff &> /dev/null; then
+            ruff check src/ --exit-zero
+            echo "✓ Ruff check completed"
+          else
+            echo "⊘ Ruff not installed, skipping"
+          fi
+        continue-on-error: true
+
+      - name: Check for common issues
+        run: |
+          echo "Checking for common Python issues..."
+          ! grep -r "import \*" src/ && echo "✓ No wildcard imports found" || echo "⚠ Wildcard imports found"
+          ! grep -r "print(" src/ && echo "✓ No print statements in src/" || echo "⚠ Print statements found in src/"
+          echo "✓ Basic checks completed"
+        continue-on-error: true

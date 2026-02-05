@@ -1,11 +1,22 @@
 name: Test Forge Parser
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/scripts/forge_parser.py'
+      - '.github/workflows/forge-catalog.yml'
+      - 'tests/test_forge.py'
+      - 'src/**'
+      - 'pyproject.toml'
   pull_request:
     paths:
       - '.github/scripts/forge_parser.py'
       - '.github/workflows/forge-catalog.yml'
       - 'tests/test_forge.py'
+      - 'src/**'
+      - 'pyproject.toml'
   workflow_dispatch:
 
 jobs:

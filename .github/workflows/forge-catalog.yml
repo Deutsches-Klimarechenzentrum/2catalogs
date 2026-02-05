@@ -11,10 +11,25 @@ permissions:
 jobs:
   parse-and-forge:
     name: Parse Issue and Generate Catalog
-    if: contains(github.event.issue.labels.*.name, 'forge-intake') || contains(github.event.issue.labels.*.name, 'forge-stac')
+    if: |
+      github.event.issue.state == 'open' &&
+      (contains(github.event.issue.labels.*.name, 'forge-intake') ||
+       contains(github.event.issue.labels.*.name, 'forge-stac'))
     runs-on: ubuntu-latest
     
     steps:
+      - name: Debug issue information
+        run: |
+          echo "=== Issue Debug Information ==="
+          echo "Issue number: ${{ github.event.issue.number }}"
+          echo "Issue title: ${{ github.event.issue.title }}"
+          echo "Issue state: ${{ github.event.issue.state }}"
+          echo "Event action: ${{ github.event.action }}"
+          echo "Labels: ${{ toJSON(github.event.issue.labels.*.name) }}"
+          echo "Has forge-intake: ${{ contains(github.event.issue.labels.*.name, 'forge-intake') }}"
+          echo "Has forge-stac: ${{ contains(github.event.issue.labels.*.name, 'forge-stac') }}"
+          echo "=============================="
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -30,15 +45,22 @@ jobs:
           HAS_INTAKE=${{ contains(github.event.issue.labels.*.name, 'forge-intake') }}
           HAS_STAC=${{ contains(github.event.issue.labels.*.name, 'forge-stac') }}
           
+          echo "Determining catalog type..."
+          echo "Has forge-intake label: $HAS_INTAKE"
+          echo "Has forge-stac label: $HAS_STAC"
+          
           if [ "$HAS_INTAKE" = "true" ] && [ "$HAS_STAC" = "true" ]; then
             echo "type=all" >> $GITHUB_OUTPUT
             echo "extras=intake,stac" >> $GITHUB_OUTPUT
+            echo "✓ Catalog type: ALL (Intake + STAC)"
           elif [ "$HAS_INTAKE" = "true" ]; then
             echo "type=intake" >> $GITHUB_OUTPUT
             echo "extras=intake" >> $GITHUB_OUTPUT
+            echo "✓ Catalog type: INTAKE"
           elif [ "$HAS_STAC" = "true" ]; then
             echo "type=stac" >> $GITHUB_OUTPUT
             echo "extras=stac" >> $GITHUB_OUTPUT
+            echo "✓ Catalog type: STAC"
           fi
 
       - name: Install dependencies
