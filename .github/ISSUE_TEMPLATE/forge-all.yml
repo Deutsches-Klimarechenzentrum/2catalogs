@@ -108,7 +108,6 @@ body:
       placeholder: |
         --verbose
         --include-pattern '*.zarr'
-      value: ""
 
   - type: input
     id: stac-api-url
