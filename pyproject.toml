@@ -1,0 +1,118 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "2catalogs"
+version = "0.1.0"
+description = "Code that generates catalogs for Earth System Model output at DKRZ"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Fabian Wachsmann", email = "wachsmann@dkrz.de"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+# Core dependencies (minimal)
+dependencies = [
+    "fsspec",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+# Intake-related dependencies
+intake = [
+    "intake>=2.0.0",
+    "tqdm",
+    "pandas",
+]
+
+# STAC-related dependencies
+stac = [
+    "pystac",
+    "xarray",
+    "pandas",
+]
+
+# All optional dependencies
+all = [
+    "intake>=2.0.0",
+    "tqdm",
+    "pandas",
+    "pystac",
+    "xarray",
+]
+
+# Development dependencies
+dev = [
+    "pre-commit",
+    "ruff",
+    "black",
+    "isort",
+    "mypy",
+    "pytest",
+    "pytest-cov",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/2catalogs"
+Repository = "https://github.com/yourusername/2catalogs"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["catalogs*", "generators*"]
+
+# Ruff configuration
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
+
+# Black configuration
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+
+# isort configuration
+[tool.isort]
+profile = "black"
+line_length = 100
+
+# mypy configuration
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+# pytest configuration
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "--cov=src --cov-report=html --cov-report=term"
