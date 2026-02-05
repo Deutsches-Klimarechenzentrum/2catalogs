@@ -349,7 +349,7 @@ def handle_intake1_yaml(
                 outcat
             )
             continue
-        elif driver == "netcdf" or "netcdf" in driver:
+        elif 'netcdf' in (driver or ''):
             outcat = handle_netcdf_input(
                 entryname=key,
                 inp=urlpath,
