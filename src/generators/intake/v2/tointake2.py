@@ -184,7 +184,7 @@ def handle_netcdf_input(
     
     logger.info("Adding NetCDF input '%s'", entryname)
 
-    storage_options: dict = so if not so is None else {}
+    storage_options: dict = so if so is not None else {}
     
     data = HDF5type(inp, storage_options=storage_options)
 
