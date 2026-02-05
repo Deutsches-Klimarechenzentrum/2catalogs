@@ -1,0 +1,115 @@
+name: Test Forge Parser
+
+on:
+  pull_request:
+    paths:
+      - '.github/scripts/forge_parser.py'
+      - '.github/workflows/forge-catalog.yml'
+      - 'test_forge.py'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/scripts/forge_parser.py'
+      - '.github/workflows/forge-catalog.yml'
+      - 'test_forge.py'
+  workflow_dispatch:
+
+jobs:
+  test-parser:
+    name: Test Forge Parser
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.11', '3.12']
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[all]"
+
+      - name: Test intake parser (dry run)
+        env:
+          ISSUE_BODY: |
+            ### Source URI
+            https://digital-earths-global-hackathon.github.io/catalog/online/catalog.yaml
+            
+            ### Output Catalog Name
+            test-catalog
+            
+            ### Source Type
+            Intake v1 YAML Catalog
+            
+            ### Description
+            Test catalog for CI
+          ISSUE_NUMBER: "test-ci-intake"
+          CATALOG_TYPE: "intake"
+        run: |
+          python .github/scripts/forge_parser.py || echo "Expected to fail with remote URL"
+
+      - name: Test STAC parser (dry run)
+        env:
+          ISSUE_BODY: |
+            ### Data Source URI
+            https://example.com/test.zarr
+            
+            ### Collection ID
+            test-collection
+            
+            ### Project ID
+            TEST
+            
+            ### Collection Description
+            Test STAC collection for CI
+          ISSUE_NUMBER: "test-ci-stac"
+          CATALOG_TYPE: "stac"
+        run: |
+          python .github/scripts/forge_parser.py
+
+      - name: Check forge output
+        run: |
+          if [ -d "forge_output" ]; then
+            echo "Forge output created successfully"
+            ls -lah forge_output/
+            if [ -f "forge_output/info.txt" ]; then
+              cat forge_output/info.txt
+            fi
+          fi
+
+      - name: Test local forge script - Intake
+        run: |
+          python test_forge.py intake \
+            --uri "https://example.com/catalog.yaml" \
+            --name "test-intake" \
+            --description "Test intake catalog" || echo "Expected failure with remote URL"
+
+      - name: Clean up
+        if: always()
+        run: |
+          rm -rf forge_output
+
+      - name: Test local forge script - STAC
+        run: |
+          python test_forge.py stac \
+            --uri "https://example.com/test.zarr" \
+            --collection "test-stac" \
+            --project "TEST" \
+            --description "Test STAC catalog"
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-forge-output-py${{ matrix.python-version }}
+          path: forge_output/
+          retention-days: 7

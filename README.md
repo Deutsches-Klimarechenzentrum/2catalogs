@@ -100,6 +100,29 @@ ImportError: The 'stac' generator requires additional dependencies.
 Install them with: pip install 2catalogs[stac]
 ```
 
+## 🚀 Catalog Forge (Automated Generation)
+
+Don't want to install anything? Use the **Catalog Forge** to generate catalogs automatically through GitHub Issues!
+
+### ⚡ Quick Start
+
+1. Go to the [Issues tab](../../issues/new/choose)
+2. Select your catalog type (Intake v2 or STAC)
+3. Enter your data source URL (e.g., `https://digital-earths-global-hackathon.github.io/catalog/online/catalog.yaml`)
+4. Submit and wait ~2-5 minutes
+5. Download your generated catalog!
+
+**📖 [Quick Start Guide](FORGE_QUICKSTART.md)** | **📚 [Full Documentation](FORGE.md)** | **💡 [Examples](FORGE_EXAMPLES.md)**
+
+### Features
+
+- ✅ No local installation required
+- 🔄 Automatic catalog generation from GitHub issues
+- 📦 Downloadable artifacts (kept for 90 days)
+- 💬 Status updates via issue comments
+- 🏷️ Support for Intake v2 and STAC catalogs
+- 🧪 Local testing tools included
+
 ## Project Structure
 
 ```
@@ -115,6 +138,13 @@ Install them with: pip install 2catalogs[stac]
 │   │       ├── xarray_dataset_to_stac_item.py
 │   │       └── utils/
 │   └── display/
+├── .github/
+│   ├── workflows/        # CI/CD pipelines
+│   │   └── forge-catalog.yml
+│   ├── scripts/          # Automation scripts
+│   │   └── forge_parser.py
+│   └── ISSUE_TEMPLATE/   # Issue templates for forge
 ├── pyproject.toml        # Package configuration
 ├── .pre-commit-config.yaml  # Pre-commit hooks configuration
+├── FORGE.md              # Forge documentation
 └── README.md

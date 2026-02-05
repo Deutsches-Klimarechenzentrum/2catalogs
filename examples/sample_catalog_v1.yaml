@@ -1,0 +1,19 @@
+# Sample Intake v1 Catalog
+# This is a minimal example for testing the forge
+
+metadata:
+  version: 1
+  description: Test catalog for forge demonstration
+  
+sources:
+  sample_zarr:
+    driver: zarr
+    description: Sample Zarr dataset
+    args:
+      urlpath: "{{ CATALOG_DIR }}/sample.zarr"
+      consolidated: True
+    metadata:
+      fields:
+        - temperature
+        - precipitation
+      time_range: "2020-2024"

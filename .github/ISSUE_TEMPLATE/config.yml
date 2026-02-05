@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/yourusername/2catalogs/blob/main/README.md
+    about: Read the documentation for usage instructions
+  - name: 💬 Discussion Forum
+    url: https://github.com/yourusername/2catalogs/discussions
+    about: Ask questions and discuss with the community
