@@ -9,15 +9,53 @@ permissions:
   contents: read
 
 jobs:
+  check-trigger:
+    name: Check Workflow Trigger
+    runs-on: ubuntu-latest
+    # This job always runs to help debug
+    steps:
+      - name: Show trigger information
+        run: |
+          echo "=== Workflow Trigger Analysis ==="
+          echo "Event: ${{ github.event_name }}"
+          echo "Action: ${{ github.event.action }}"
+          echo "Issue number: ${{ github.event.issue.number }}"
+          echo "Issue title: '${{ github.event.issue.title }}'"
+          echo "Issue state: ${{ github.event.issue.state }}"
+          echo ""
+          echo "=== Title Checks ==="
+          echo "Starts with [Forge-Intake]: ${{ startsWith(github.event.issue.title, '[Forge-Intake]') }}"
+          echo "Starts with [Forge-STAC]: ${{ startsWith(github.event.issue.title, '[Forge-STAC]') }}"
+          echo "Starts with [Forge-All]: ${{ startsWith(github.event.issue.title, '[Forge-All]') }}"
+          echo ""
+          echo "=== Label Checks ==="
+          echo "All labels: ${{ toJSON(github.event.issue.labels.*.name) }}"
+          echo "Has forge-intake: ${{ contains(github.event.issue.labels.*.name, 'forge-intake') }}"
+          echo "Has forge-stac: ${{ contains(github.event.issue.labels.*.name, 'forge-stac') }}"
+          echo ""
+          echo "=== Condition Result ==="
+          SHOULD_RUN="${{ 
+            github.event.issue.state == 'open' &&
+            (startsWith(github.event.issue.title, '[Forge-Intake]') ||
+             startsWith(github.event.issue.title, '[Forge-STAC]') ||
+             startsWith(github.event.issue.title, '[Forge-All]') ||
+             contains(github.event.issue.labels.*.name, 'forge-intake') ||
+             contains(github.event.issue.labels.*.name, 'forge-stac'))
+          }}"
+          echo "Should run parse-and-forge: $SHOULD_RUN"
+          echo "================================"
+
   parse-and-forge:
     name: Parse Issue and Generate Catalog
+    needs: check-trigger
+    # Always run for issues with forge titles, check labels for additional confirmation
     if: |
       github.event.issue.state == 'open' &&
-      (contains(github.event.issue.labels.*.name, 'forge-intake') ||
-       contains(github.event.issue.labels.*.name, 'forge-stac') ||
-       startsWith(github.event.issue.title, '[Forge-Intake]') ||
+      (startsWith(github.event.issue.title, '[Forge-Intake]') ||
        startsWith(github.event.issue.title, '[Forge-STAC]') ||
-       startsWith(github.event.issue.title, '[Forge-All]'))
+       startsWith(github.event.issue.title, '[Forge-All]') ||
+       contains(github.event.issue.labels.*.name, 'forge-intake') ||
+       contains(github.event.issue.labels.*.name, 'forge-stac'))
     runs-on: ubuntu-latest
     
     steps:
