@@ -27,10 +27,16 @@ jobs:
       - name: Determine catalog type
         id: catalog-type
         run: |
-          if ${{ contains(github.event.issue.labels.*.name, 'forge-intake') }}; then
+          HAS_INTAKE=${{ contains(github.event.issue.labels.*.name, 'forge-intake') }}
+          HAS_STAC=${{ contains(github.event.issue.labels.*.name, 'forge-stac') }}
+          
+          if [ "$HAS_INTAKE" = "true" ] && [ "$HAS_STAC" = "true" ]; then
+            echo "type=all" >> $GITHUB_OUTPUT
+            echo "extras=intake,stac" >> $GITHUB_OUTPUT
+          elif [ "$HAS_INTAKE" = "true" ]; then
             echo "type=intake" >> $GITHUB_OUTPUT
             echo "extras=intake" >> $GITHUB_OUTPUT
-          elif ${{ contains(github.event.issue.labels.*.name, 'forge-stac') }}; then
+          elif [ "$HAS_STAC" = "true" ]; then
             echo "type=stac" >> $GITHUB_OUTPUT
             echo "extras=stac" >> $GITHUB_OUTPUT
           fi

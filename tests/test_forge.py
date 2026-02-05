@@ -70,6 +70,47 @@ def create_stac_issue_body(uri: str, collection_id: str, project_id: str,
     return body
 
 
+def create_all_issue_body(uri: str, collection_id: str, project_id: str,
+                          description: str, source_type: str = "Auto-detect",
+                          source_id: str = "", experiment_id: str = "",
+                          options: str = "") -> str:
+    """Create a simulated issue body for generating all catalogs."""
+    body = f"""### Data Source URI
+{uri}
+
+### Collection/Catalog ID
+{collection_id}
+
+### Project ID
+{project_id}
+
+### Collection Description
+{description}
+
+### Source Type (Intake)
+{source_type}"""
+    
+    if source_id:
+        body += f"""
+
+### Source ID (Model)
+{source_id}"""
+    
+    if experiment_id:
+        body += f"""
+
+### Experiment ID
+{experiment_id}"""
+    
+    if options:
+        body += f"""
+
+### Additional Options (Intake)
+{options}"""
+    
+    return body
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Test catalog forge locally",
@@ -88,6 +129,13 @@ Examples:
     --collection eerie-icon-test \\
     --project EERIE \\
     --description "Test STAC collection"
+  
+  # Test generating all catalogs
+  python test_forge.py all \\
+    --uri https://example.com/data.zarr \\
+    --collection eerie-icon-test \\
+    --project EERIE \\
+    --description "Test both catalogs"
         """
     )
     
@@ -113,6 +161,20 @@ Examples:
     stac_parser.add_argument('--source', default='', help='Source ID (model)')
     stac_parser.add_argument('--experiment', default='', help='Experiment ID')
     
+    # All catalogs command
+    all_parser = subparsers.add_parser('all', help='Test generation of all catalogs')
+    all_parser.add_argument('--uri', required=True, help='Data source URI')
+    all_parser.add_argument('--collection', required=True, help='Collection/Catalog ID')
+    all_parser.add_argument('--project', required=True, help='Project ID')
+    all_parser.add_argument('--description', required=True, help='Collection description')
+    all_parser.add_argument('--source', default='', help='Source ID (model)')
+    all_parser.add_argument('--experiment', default='', help='Experiment ID')
+    all_parser.add_argument('--source-type', default='Auto-detect',
+                           choices=['Intake v1 YAML Catalog', 'Zarr Store', 
+                                   'Reference Parquet', 'Auto-detect'],
+                           help='Source type for Intake')
+    all_parser.add_argument('--options', default='', help='Additional Intake options (one per line)')
+    
     args = parser.parse_args()
     
     # Create issue body
@@ -121,10 +183,16 @@ Examples:
             args.uri, args.name, args.source_type, 
             args.description, args.options
         )
-    else:  # stac
+    elif args.catalog_type == 'stac':
         issue_body = create_stac_issue_body(
             args.uri, args.collection, args.project,
             args.description, args.source, args.experiment
+        )
+    else:  # all
+        issue_body = create_all_issue_body(
+            args.uri, args.collection, args.project,
+            args.description, args.source_type,
+            args.source, args.experiment, args.options
         )
     
     print("=" * 70)

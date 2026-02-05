@@ -255,6 +255,22 @@ def main():
             exit_code = run_intake_forge(fields, output_dir)
         elif catalog_type == 'stac':
             exit_code = run_stac_forge(fields, output_dir)
+        elif catalog_type == 'all':
+            print("Running both Intake and STAC forge...")
+            # Run intake first
+            print("\n=== Generating Intake v2 Catalog ===")
+            intake_exit = run_intake_forge(fields, output_dir)
+            if intake_exit != 0:
+                print("Warning: Intake generation failed")
+            
+            # Then run STAC
+            print("\n=== Generating STAC Catalog ===")
+            stac_exit = run_stac_forge(fields, output_dir)
+            if stac_exit != 0:
+                print("Warning: STAC generation failed")
+            
+            # Return 0 if at least one succeeded
+            exit_code = 0 if (intake_exit == 0 or stac_exit == 0) else 1
         else:
             print(f"Unknown catalog type: {catalog_type}")
             sys.exit(1)

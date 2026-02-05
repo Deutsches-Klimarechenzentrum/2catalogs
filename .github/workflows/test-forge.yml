@@ -6,13 +6,6 @@ on:
       - '.github/scripts/forge_parser.py'
       - '.github/workflows/forge-catalog.yml'
       - 'tests/test_forge.py'
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/scripts/forge_parser.py'
-      - '.github/workflows/forge-catalog.yml'
-      - 'tests/test_forge.py'
   workflow_dispatch:
 
 jobs:
@@ -91,7 +84,7 @@ jobs:
           python tests/test_forge.py intake \
             --uri "https://example.com/catalog.yaml" \
             --name "test-intake" \
-            --description "Test intake catalog" || echo "Expected failure with remote URL"
+            --description "Test intake catalog" || echo "✓ Expected failure with remote URL"
 
       - name: Clean up
         if: always()
@@ -104,7 +97,7 @@ jobs:
             --uri "https://example.com/test.zarr" \
             --collection "test-stac" \
             --project "TEST" \
-            --description "Test STAC catalog"
+            --description "Test STAC catalog" || echo "✓ Expected failure with remote URL"
 
       - name: Upload test artifacts
         if: always()

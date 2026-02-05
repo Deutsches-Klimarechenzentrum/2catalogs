@@ -17,6 +17,11 @@ These labels are used by the automated catalog generation pipeline:
   - Description: Request STAC catalog generation
   - Automatically applied by the STAC issue template
 
+- **`forge-all`** 🚀
+  - Color: `#6F42C1` (purple)
+  - Description: Request generation of all catalog types
+  - Note: This label is not used directly; the "Generate All Catalogs" template applies both `forge-intake` and `forge-stac` labels
+
 ### Status Labels
 - **`forge-complete`** ✅
   - Color: `#0E8A16` (green)
