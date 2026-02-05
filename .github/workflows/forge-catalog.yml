@@ -2,7 +2,7 @@ name: Forge Catalog
 
 on:
   issues:
-    types: [opened, labeled]
+    types: [opened]
 
 permissions:
   issues: write
@@ -14,7 +14,10 @@ jobs:
     if: |
       github.event.issue.state == 'open' &&
       (contains(github.event.issue.labels.*.name, 'forge-intake') ||
-       contains(github.event.issue.labels.*.name, 'forge-stac'))
+       contains(github.event.issue.labels.*.name, 'forge-stac') ||
+       startsWith(github.event.issue.title, '[Forge-Intake]') ||
+       startsWith(github.event.issue.title, '[Forge-STAC]') ||
+       startsWith(github.event.issue.title, '[Forge-All]'))
     runs-on: ubuntu-latest
     
     steps:
@@ -30,6 +33,23 @@ jobs:
           echo "Has forge-stac: ${{ contains(github.event.issue.labels.*.name, 'forge-stac') }}"
           echo "=============================="
 
+      - name: Comment workflow started
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = `🚀 **Catalog generation started!**\n\n` +
+              `The forge pipeline is now processing your request.\n\n` +
+              `**Status:** Running\n` +
+              `**Workflow:** [View live progress](${context.payload.repository.html_url}/actions/runs/${context.runId})\n\n` +
+              `You will be notified here when the generation is complete.`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -44,23 +64,33 @@ jobs:
         run: |
           HAS_INTAKE=${{ contains(github.event.issue.labels.*.name, 'forge-intake') }}
           HAS_STAC=${{ contains(github.event.issue.labels.*.name, 'forge-stac') }}
+          TITLE="${{ github.event.issue.title }}"
           
           echo "Determining catalog type..."
+          echo "Title: $TITLE"
           echo "Has forge-intake label: $HAS_INTAKE"
           echo "Has forge-stac label: $HAS_STAC"
           
+          # Check labels first, then fall back to title
           if [ "$HAS_INTAKE" = "true" ] && [ "$HAS_STAC" = "true" ]; then
             echo "type=all" >> $GITHUB_OUTPUT
             echo "extras=intake,stac" >> $GITHUB_OUTPUT
             echo "✓ Catalog type: ALL (Intake + STAC)"
-          elif [ "$HAS_INTAKE" = "true" ]; then
+          elif [ "$HAS_INTAKE" = "true" ] || [[ "$TITLE" == *"[Forge-Intake]"* ]]; then
             echo "type=intake" >> $GITHUB_OUTPUT
             echo "extras=intake" >> $GITHUB_OUTPUT
             echo "✓ Catalog type: INTAKE"
-          elif [ "$HAS_STAC" = "true" ]; then
+          elif [ "$HAS_STAC" = "true" ] || [[ "$TITLE" == *"[Forge-STAC]"* ]]; then
             echo "type=stac" >> $GITHUB_OUTPUT
             echo "extras=stac" >> $GITHUB_OUTPUT
             echo "✓ Catalog type: STAC"
+          elif [[ "$TITLE" == *"[Forge-All]"* ]]; then
+            echo "type=all" >> $GITHUB_OUTPUT
+            echo "extras=intake,stac" >> $GITHUB_OUTPUT
+            echo "✓ Catalog type: ALL (from title)"
+          else
+            echo "❌ Could not determine catalog type"
+            exit 1
           fi
 
       - name: Install dependencies

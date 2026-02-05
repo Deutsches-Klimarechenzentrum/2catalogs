@@ -6,8 +6,10 @@ def __getattr__(name):
     """Lazy import for intake v2 modules."""
     if name == "tointake2":
         try:
-            from . import tointake2 as module
-            return module
+            from .tointake2 import main
+            import sys
+            # Return the module itself
+            return sys.modules[__name__ + '.tointake2']
         except ImportError as e:
             raise ImportError(
                 f"The intake v2 generator requires additional dependencies. "
