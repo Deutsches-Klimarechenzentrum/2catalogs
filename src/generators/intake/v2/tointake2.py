@@ -111,7 +111,7 @@ def handle_reference(
     if rp:
         rp = rp.split(':')[0]
         if rp.startswith("http"):
-            storage_options["remote_options"]=dict(asynchronous=True)
+            storage_options["remote_options"] = dict(asynchronous=True)
             #storage_options["asyncronous"]=True
 
     else:
