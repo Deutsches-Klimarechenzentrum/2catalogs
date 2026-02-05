@@ -1,0 +1,34 @@
+aliases: {}
+data:
+  903be6c7a31a7b36:
+    datatype: intake.readers.datatypes:YAMLFile
+    kwargs:
+      storage_options: null
+      url: '{{ CATALOG_DIR }}/generated/test.yaml'
+    metadata: {}
+    user_parameters: {}
+entries:
+  test:
+    kwargs:
+      args:
+      - '{data(903be6c7a31a7b36)}'
+    metadata:
+      added: '2026-02-05'
+      description: ''
+      issue: '10'
+      project: unknown
+      source_uri: https://eerie.cloud.dkrz.de/intake.yaml
+    output_instance: intake.readers.entry:Catalog
+    reader: intake.readers.readers:YAMLCatalogReader
+    user_parameters: {}
+metadata:
+  created: '2026-02-05'
+  description: Publicly contributed Intake v2 catalogs
+  last_updated: '2026-02-05'
+  name: 2catalogs Community Catalog
+  version: 1
+user_parameters:
+  CATALOG_DIR: file:///home/runner/work/2catalogs/2catalogs/catalog
+  CATALOG_PATH: catalog/main.yaml
+  STORAGE_OPTIONS: {}
+version: 2
