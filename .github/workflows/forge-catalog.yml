@@ -142,6 +142,7 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           CATALOG_TYPE: ${{ steps.catalog-type.outputs.type }}
         run: |
+          set -e
           pip install pyyaml
           python .github/scripts/forge_parser.py
 

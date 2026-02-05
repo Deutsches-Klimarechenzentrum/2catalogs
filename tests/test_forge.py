@@ -145,12 +145,9 @@ Examples:
     intake_parser = subparsers.add_parser('intake', help='Test Intake v2 generation')
     intake_parser.add_argument('--uri', required=True, help='Source URI')
     intake_parser.add_argument('--name', required=True, help='Output catalog name')
-    intake_parser.add_argument('--source-type', default='Auto-detect',
-                              choices=['Intake v1 YAML Catalog', 'Zarr Store', 
-                                      'Reference Parquet', 'Auto-detect'],
-                              help='Source type')
+        # Removed --source-type
     intake_parser.add_argument('--description', default='', help='Description')
-    intake_parser.add_argument('--options', default='', help='Additional options (one per line)')
+    # Removed --options
     
     # STAC command
     stac_parser = subparsers.add_parser('stac', help='Test STAC generation')
@@ -169,11 +166,8 @@ Examples:
     all_parser.add_argument('--description', required=True, help='Collection description')
     all_parser.add_argument('--source', default='', help='Source ID (model)')
     all_parser.add_argument('--experiment', default='', help='Experiment ID')
-    all_parser.add_argument('--source-type', default='Auto-detect',
-                           choices=['Intake v1 YAML Catalog', 'Zarr Store', 
-                                   'Reference Parquet', 'Auto-detect'],
-                           help='Source type for Intake')
-    all_parser.add_argument('--options', default='', help='Additional Intake options (one per line)')
+        # Removed --source-type
+    # Removed --options
     
     args = parser.parse_args()
     

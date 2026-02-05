@@ -33,30 +33,13 @@ body:
     validations:
       required: true
 
-  - type: dropdown
-    id: source-type
-    attributes:
-      label: Source Type
-      description: What type of source are you converting from?
-      options:
-        - Intake v1 YAML Catalog
-        - Zarr Store
-        - Reference Parquet
-        - Auto-detect
-      default: 3
-    validations:
-      required: true
 
-  - type: textarea
-    id: additional-options
+  - type: input
+    id: main-catalog-entry
     attributes:
-      label: Additional Options
-      description: |
-        Any additional command-line options for tointake2 (one per line).
-        See the tool documentation for available options.
-      placeholder: |
-        --verbose
-        --include-pattern '*.zarr'
+      label: Desired Name in Main Catalog (if public)
+      description: If you want this catalog published, what should the entry be called in the central catalog?
+      placeholder: "my-intake-catalog"
 
   - type: textarea
     id: description
