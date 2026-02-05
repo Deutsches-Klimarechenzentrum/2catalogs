@@ -11,8 +11,10 @@ import os
 import re
 import subprocess
 import sys
+import yaml
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 
 def parse_issue_body(body: str) -> Dict[str, str]:
@@ -48,6 +50,118 @@ def parse_issue_body(body: str) -> Dict[str, str]:
         fields[current_field] = '\n'.join(current_value).strip()
     
     return fields
+
+
+def load_main_catalog() -> Dict:
+    """Load the main community catalog."""
+    catalog_path = Path('catalog/main.yaml')
+    if not catalog_path.exists():
+        return {
+            'metadata': {
+                'version': 1,
+                'name': '2catalogs Community Catalog',
+                'description': 'Publicly contributed Intake v2 catalogs',
+                'created': datetime.now().date().isoformat(),
+                'last_updated': datetime.now().date().isoformat()
+            },
+            'sources': {}
+        }
+    
+    with open(catalog_path, 'r') as f:
+        return yaml.safe_load(f)
+
+
+def check_duplicate(catalog_name: str) -> Tuple[bool, Optional[str]]:
+    """
+    Check if a catalog entry already exists in the main catalog.
+    
+    Returns:
+        Tuple of (is_duplicate, existing_source_uri)
+    """
+    try:
+        main_catalog = load_main_catalog()
+        sources = main_catalog.get('sources', {})
+        
+        if catalog_name in sources:
+            existing_uri = sources[catalog_name].get('args', {}).get('urlpath', 'unknown')
+            return True, existing_uri
+        
+        return False, None
+    except Exception as e:
+        print(f"Warning: Could not check for duplicates: {e}")
+        return False, None
+
+
+def add_to_main_catalog(catalog_name: str, catalog_path: Path, fields: Dict[str, str], issue_number: str) -> bool:
+    """
+    Add a new catalog entry to the main community catalog.
+    
+    Returns:
+        True if successfully added, False otherwise
+    """
+    try:
+        main_catalog = load_main_catalog()
+        
+        # Check if marked as public
+        visibility = fields.get('Visibility', '')
+        is_public = 'Make this catalog publicly accessible' in visibility
+        
+        if not is_public:
+            print(f"Catalog '{catalog_name}' is not marked as public, skipping addition to main catalog")
+            return False
+        
+        # Check for duplicate
+        is_dup, existing_uri = check_duplicate(catalog_name)
+        if is_dup:
+            print(f"⚠️  Duplicate found: '{catalog_name}' already exists in main catalog")
+            print(f"   Existing URI: {existing_uri}")
+            return False
+        
+        # Read the generated catalog
+        if not catalog_path.exists():
+            print(f"Generated catalog not found at {catalog_path}")
+            return False
+        
+        with open(catalog_path, 'r') as f:
+            generated_catalog = yaml.safe_load(f)
+        
+        # Extract source info from generated catalog
+        source_uri = fields.get('Source URI', '')
+        description = fields.get('Description', 'No description provided')
+        
+        # Add entry to main catalog
+        main_catalog['sources'][catalog_name] = {
+            'driver': 'intake.catalog.local.YAMLFileCatalog',
+            'description': description,
+            'args': {
+                'path': f'{{{{ CATALOG_DIR }}}}/generated/{catalog_name}.yaml'
+            },
+            'metadata': {
+                'source_uri': source_uri,
+                'added': datetime.now().date().isoformat(),
+                'issue': issue_number,
+                'project': fields.get('Project ID', 'unknown')
+            }
+        }
+        
+        # Update metadata
+        main_catalog['metadata']['last_updated'] = datetime.now().date().isoformat()
+        
+        # Save updated catalog
+        catalog_dir = Path('catalog')
+        catalog_dir.mkdir(exist_ok=True)
+        
+        with open(catalog_dir / 'main.yaml', 'w') as f:
+            yaml.dump(main_catalog, f, default_flow_style=False, sort_keys=False)
+        
+        print(f"✓ Added '{catalog_name}' to main catalog")
+        return True
+        
+    except Exception as e:
+        print(f"Error adding to main catalog: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 
 def create_output_dir():
@@ -93,7 +207,7 @@ def run_intake_forge(fields: Dict[str, str], output_dir: Path) -> int:
         }
         if source_type in type_map:
             # Note: tointake2 auto-detects, but we log it
-            logger.info(f"Source type specified: {type_map[source_type]}")
+            print(f"Source type specified: {type_map[source_type]}")
     
     # Add additional options
     if additional_options:
@@ -252,16 +366,61 @@ def main():
     # Run the appropriate forge
     try:
         if catalog_type == 'intake':
+            # Check for duplicates before running
+            catalog_name = fields.get('Output Catalog Name', 'catalog').strip()
+            is_dup, existing_uri = check_duplicate(catalog_name)
+            if is_dup:
+                warning_msg = (
+                    f"⚠️  **Duplicate Entry Warning**\n\n"
+                    f"A catalog named `{catalog_name}` already exists in the main community catalog.\n\n"
+                    f"**Existing source:** {existing_uri}\n\n"
+                    f"Your catalog will still be generated and available as an artifact, "
+                    f"but it will **not** be added to the main community catalog.\n\n"
+                    f"If you want to add it, please:\n"
+                    f"1. Choose a different catalog name\n"
+                    f"2. Create a new issue with the updated name"
+                )
+                # Write warning to file for workflow to display
+                with open(output_dir / 'duplicate_warning.txt', 'w') as f:
+                    f.write(warning_msg)
+                print(warning_msg)
+            
             exit_code = run_intake_forge(fields, output_dir)
+            
+            # Add to main catalog if successful and not duplicate
+            if exit_code == 0 and not is_dup:
+                catalog_path = output_dir / f'{catalog_name}.yaml'
+                added = add_to_main_catalog(catalog_name, catalog_path, fields, issue_number)
+                if added:
+                    with open(output_dir / 'added_to_main.txt', 'w') as f:
+                        f.write(f"✓ Added to main community catalog as '{catalog_name}'")
+                        
         elif catalog_type == 'stac':
             exit_code = run_stac_forge(fields, output_dir)
         elif catalog_type == 'all':
             print("Running both Intake and STAC forge...")
+            # Check for duplicates for intake
+            catalog_name = fields.get('Collection/Catalog ID', 'catalog').strip()
+            is_dup, existing_uri = check_duplicate(catalog_name)
+            if is_dup:
+                warning_msg = (
+                    f"⚠️  **Duplicate Entry Warning**\n\n"
+                    f"A catalog named `{catalog_name}` already exists.\n\n"
+                    f"**Existing source:** {existing_uri}\n\n"
+                    f"Your catalogs will still be generated but not added to the main catalog."
+                )
+                with open(output_dir / 'duplicate_warning.txt', 'w') as f:
+                    f.write(warning_msg)
+                print(warning_msg)
+            
             # Run intake first
             print("\n=== Generating Intake v2 Catalog ===")
             intake_exit = run_intake_forge(fields, output_dir)
             if intake_exit != 0:
                 print("Warning: Intake generation failed")
+            elif not is_dup:
+                catalog_path = output_dir / f'{catalog_name}.yaml'
+                add_to_main_catalog(catalog_name, catalog_path, fields, issue_number)
             
             # Then run STAC
             print("\n=== Generating STAC Catalog ===")

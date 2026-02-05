@@ -1,0 +1,9 @@
+metadata:
+  version: 1
+  name: "2catalogs Community Catalog"
+  description: "Publicly contributed Intake v2 catalogs from the 2catalogs forge"
+  homepage: "https://github.com/yourusername/2catalogs"
+  created: "2026-02-05"
+  last_updated: "2026-02-05"
+
+sources: {}

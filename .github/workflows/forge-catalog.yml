@@ -6,7 +6,7 @@ on:
 
 permissions:
   issues: write
-  contents: read
+  contents: write  # Need write permission to commit catalog updates
 
 jobs:
   check-trigger:
@@ -142,7 +142,34 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           CATALOG_TYPE: ${{ steps.catalog-type.outputs.type }}
         run: |
+          pip install pyyaml
           python .github/scripts/forge_parser.py
+
+      - name: Commit and push catalog updates
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          if [ -f "forge_output/added_to_main.txt" ]; then
+            echo "📝 Catalog was added to main catalog, committing changes..."
+            git add catalog/main.yaml
+            git commit -m "Add catalog from issue #${{ github.event.issue.number }}" || echo "No changes to commit"
+            git push || echo "Push failed, but continuing..."
+          else
+            echo "ℹ️  No catalog updates to commit"
+          fi
+
+      - name: Check for duplicate warning
+        id: duplicate-check
+        if: always()
+        run: |
+          if [ -f "forge_output/duplicate_warning.txt" ]; then
+            echo "has_duplicate=true" >> $GITHUB_OUTPUT
+            echo "⚠️  Duplicate warning found"
+          else
+            echo "has_duplicate=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Upload generated catalog
         uses: actions/upload-artifact@v4
@@ -158,6 +185,21 @@ jobs:
           script: |
             const fs = require('fs');
             let comment = '✅ **Catalog generation completed successfully!**\n\n';
+            
+            // Check for duplicate warning
+            if (fs.existsSync('forge_output/duplicate_warning.txt')) {
+              const warning = fs.readFileSync('forge_output/duplicate_warning.txt', 'utf8');
+              comment += warning + '\n\n';
+              comment += '---\n\n';
+            }
+            
+            // Check if added to main catalog
+            if (fs.existsSync('forge_output/added_to_main.txt')) {
+              const addedMsg = fs.readFileSync('forge_output/added_to_main.txt', 'utf8');
+              comment += '🎉 ' + addedMsg + '\n\n';
+              comment += `Your catalog is now available in the [community catalog](${context.payload.repository.html_url.replace('github.com', 'github.io').replace(/\/[^\/]+$/, '')})!\n\n`;
+              comment += '---\n\n';
+            }
             
             // Read the output info file if it exists
             if (fs.existsSync('forge_output/info.txt')) {

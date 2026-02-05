@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2catalogs Community Catalog</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .main-content {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #667eea;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .selection-info {
+            background: #f0f7ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .selection-info.active {
+            display: block;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+        
+        .badge-intake {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-stac {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .truncate {
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: white;
+            margin-top: 30px;
+        }
+        
+        .footer a {
+            color: white;
+            text-decoration: underline;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🗂️ 2catalogs Community Catalog</h1>
+            <p class="subtitle">Publicly contributed Intake v2 catalogs from the community</p>
+        </header>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="total-catalogs">0</div>
+                <div class="stat-label">Total Catalogs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="total-sources">0</div>
+                <div class="stat-label">Total Sources</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="last-updated">-</div>
+                <div class="stat-label">Last Updated</div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="controls">
+                <input type="text" class="search-box" id="search" placeholder="🔍 Search catalogs...">
+                <button class="btn btn-secondary" onclick="selectAll()">Select All</button>
+                <button class="btn btn-secondary" onclick="deselectAll()">Deselect All</button>
+                <button class="btn btn-primary" id="download-btn" onclick="downloadSelected()" disabled>
+                    📥 Download Selected (<span id="selected-count">0</span>)
+                </button>
+            </div>
+            
+            <div class="selection-info" id="selection-info">
+                <strong>Selection:</strong> <span id="selection-details"></span>
+            </div>
+            
+            <div id="catalog-container">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading catalog...</p>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="footer">
+            <p>Generated by <a href="https://github.com/yourusername/2catalogs">2catalogs</a> | 
+            <a href="https://github.com/yourusername/2catalogs/issues/new/choose">Submit your catalog</a></p>
+        </footer>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/js-yaml@4/dist/js-yaml.min.js"></script>
+    <script>
+        let catalogData = null;
+        let selectedItems = new Set();
+        
+        async function loadCatalog() {
+            try {
+                const response = await fetch('catalog/main.yaml');
+                const yamlText = await response.text();
+                catalogData = jsyaml.load(yamlText);
+                
+                updateStats();
+                renderTable();
+            } catch (error) {
+                document.getElementById('catalog-container').innerHTML = `
+                    <div class="empty-state">
+                        <h3>Error loading catalog</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function updateStats() {
+            const sources = catalogData.sources || {};
+            const sourceCount = Object.keys(sources).length;
+            
+            document.getElementById('total-sources').textContent = sourceCount;
+            document.getElementById('total-catalogs').textContent = sourceCount;
+            document.getElementById('last-updated').textContent = 
+                catalogData.metadata?.last_updated || 'Unknown';
+        }
+        
+        function renderTable(filter = '') {
+            const sources = catalogData.sources || {};
+            const sourceKeys = Object.keys(sources);
+            
+            if (sourceKeys.length === 0) {
+                document.getElementById('catalog-container').innerHTML = `
+                    <div class="empty-state">
+                        <h3>No catalogs yet</h3>
+                        <p>Be the first to contribute a catalog!</p>
+                        <a href="https://github.com/yourusername/2catalogs/issues/new/choose" class="btn btn-primary" style="margin-top: 20px;">
+                            Submit Catalog
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+            
+            const filteredKeys = sourceKeys.filter(key => {
+                if (!filter) return true;
+                const source = sources[key];
+                const searchStr = `${key} ${source.description || ''} ${source.metadata?.project || ''}`.toLowerCase();
+                return searchStr.includes(filter.toLowerCase());
+            });
+            
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" class="checkbox" id="select-all-checkbox" onchange="toggleAll(this.checked)"></th>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Type</th>
+                            <th>Project</th>
+                            <th>Added</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            filteredKeys.forEach(key => {
+                const source = sources[key];
+                const checked = selectedItems.has(key) ? 'checked' : '';
+                const type = source.driver || 'unknown';
+                const project = source.metadata?.project || '-';
+                const added = source.metadata?.added || '-';
+                const description = source.description || 'No description';
+                
+                tableHTML += `
+                    <tr>
+                        <td><input type="checkbox" class="checkbox" ${checked} onchange="toggleSelection('${key}', this.checked)"></td>
+                        <td><strong>${key}</strong></td>
+                        <td><div class="truncate" title="${description}">${description}</div></td>
+                        <td><span class="badge badge-intake">${type}</span></td>
+                        <td>${project}</td>
+                        <td>${added}</td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += '</tbody></table>';
+            document.getElementById('catalog-container').innerHTML = tableHTML;
+            
+            if (filteredKeys.length === 0) {
+                document.getElementById('catalog-container').innerHTML = `
+                    <div class="empty-state">
+                        <h3>No results found</h3>
+                        <p>Try a different search term</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function toggleSelection(key, checked) {
+            if (checked) {
+                selectedItems.add(key);
+            } else {
+                selectedItems.delete(key);
+            }
+            updateSelectionUI();
+        }
+        
+        function toggleAll(checked) {
+            const sources = catalogData.sources || {};
+            if (checked) {
+                Object.keys(sources).forEach(key => selectedItems.add(key));
+            } else {
+                selectedItems.clear();
+            }
+            renderTable(document.getElementById('search').value);
+            updateSelectionUI();
+        }
+        
+        function selectAll() {
+            toggleAll(true);
+        }
+        
+        function deselectAll() {
+            toggleAll(false);
+        }
+        
+        function updateSelectionUI() {
+            const count = selectedItems.size;
+            document.getElementById('selected-count').textContent = count;
+            document.getElementById('download-btn').disabled = count === 0;
+            
+            if (count > 0) {
+                document.getElementById('selection-info').classList.add('active');
+                document.getElementById('selection-details').textContent = 
+                    `${count} catalog(s) selected: ${Array.from(selectedItems).slice(0, 3).join(', ')}${count > 3 ? '...' : ''}`;
+            } else {
+                document.getElementById('selection-info').classList.remove('active');
+            }
+        }
+        
+        function downloadSelected() {
+            if (selectedItems.size === 0) return;
+            
+            // Create a new catalog with only selected sources
+            const selectedCatalog = {
+                metadata: {
+                    ...catalogData.metadata,
+                    name: "Custom Selection from 2catalogs",
+                    description: `Selected ${selectedItems.size} catalog(s) from the 2catalogs community`,
+                    generated: new Date().toISOString().split('T')[0],
+                    source: window.location.href
+                },
+                sources: {}
+            };
+            
+            // Add selected sources
+            selectedItems.forEach(key => {
+                if (catalogData.sources[key]) {
+                    selectedCatalog.sources[key] = catalogData.sources[key];
+                }
+            });
+            
+            // Convert to YAML
+            const yamlContent = jsyaml.dump(selectedCatalog, {
+                indent: 2,
+                lineWidth: -1,
+                noRefs: true
+            });
+            
+            // Create download
+            const blob = new Blob([yamlContent], { type: 'application/x-yaml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `2catalogs-selection-${new Date().toISOString().split('T')[0]}.yaml`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Search functionality
+        document.getElementById('search').addEventListener('input', (e) => {
+            renderTable(e.target.value);
+        });
+        
+        // Load catalog on page load
+        loadCatalog();
+    </script>
+</body>
+</html>
