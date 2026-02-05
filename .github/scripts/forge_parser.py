@@ -9,9 +9,7 @@ and execute the appropriate catalog generation tool.
 import json
 import logging
 import os
-import re
 import sys
-import yaml
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional, Tuple
@@ -132,7 +130,7 @@ def add_to_main_catalog(catalog_name: str, catalog_path: Path, fields: Dict[str,
         # Add new source using Intake2 API (YAMLFileCatalog entry)
         from intake.readers.readers import YAMLCatalogReader
         entry = YAMLCatalogReader(
-            path=f'{{{{ CATALOG_DIR }}}}/generated/{catalog_name}.yaml',
+            f'{{{{ CATALOG_DIR }}}}/generated/{catalog_name}.yaml',
             metadata={
                 'source_uri': source_uri,
                 'added': datetime.now().date().isoformat(),
@@ -141,7 +139,7 @@ def add_to_main_catalog(catalog_name: str, catalog_path: Path, fields: Dict[str,
                 'project': fields.get('Project ID', 'unknown')
             }
         )
-        main_catalog[name]=entry
+        main_catalog[catalog_name]=entry
         # Update metadata
         meta = dict(main_catalog.metadata)
         meta['last_updated'] = datetime.now().date().isoformat()
