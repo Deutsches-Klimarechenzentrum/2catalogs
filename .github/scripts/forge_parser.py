@@ -7,14 +7,18 @@ and execute the appropriate catalog generation tool.
 """
 
 import json
+import logging
 import os
 import re
-import subprocess
 import sys
 import yaml
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional, Tuple
+
+# Import intake and tointake2 functions
+import intake
+from generators.intake.v2.tointake2 import convert_to_intake2, setup_logging as setup_tointake2_logging
 
 
 def parse_issue_body(body: str) -> Dict[str, str]:
@@ -122,8 +126,8 @@ def add_to_main_catalog(catalog_name: str, catalog_path: Path, fields: Dict[str,
             print(f"Generated catalog not found at {catalog_path}")
             return False
         
-        with open(catalog_path, 'r') as f:
-            generated_catalog = yaml.safe_load(f)
+        # Use intake to load the catalog
+        generated_catalog = intake.open_catalog(str(catalog_path))
         
         # Extract source info from generated catalog
         source_uri = fields.get('Source URI', '')
@@ -190,15 +194,9 @@ def run_intake_forge(fields: Dict[str, str], output_dir: Path) -> int:
     if not source_uri:
         raise ValueError("Source URI is required")
     
-    # Build the command
-    cmd = [
-        sys.executable,  # Use same Python interpreter
-        '-m', 'generators.intake.v2.tointake2',
-        source_uri,
-        '--out', str(output_dir / f'{output_name}.yaml')
-    ]
+    output_path = str(output_dir / f'{output_name}.yaml')
     
-    # Add source type if not auto-detect
+    # Log source type if specified
     if source_type != 'Auto-detect':
         type_map = {
             'Intake v1 YAML Catalog': 'yaml',
@@ -206,19 +204,7 @@ def run_intake_forge(fields: Dict[str, str], output_dir: Path) -> int:
             'Reference Parquet': 'parquet'
         }
         if source_type in type_map:
-            # Note: tointake2 auto-detects, but we log it
             print(f"Source type specified: {type_map[source_type]}")
-    
-    # Add additional options
-    if additional_options:
-        for opt in additional_options.split('\n'):
-            opt = opt.strip()
-            if opt and not opt.startswith('#'):
-                # Handle options that might have spaces
-                if opt.startswith('--'):
-                    cmd.append(opt)
-                else:
-                    cmd.extend(opt.split())
     
     # Write info
     info_path = output_dir / 'info.txt'
@@ -229,38 +215,27 @@ def run_intake_forge(fields: Dict[str, str], output_dir: Path) -> int:
         f.write(f"Source Type: {source_type}\n")
         if fields.get('Description'):
             f.write(f"Description: {fields['Description']}\n")
-        f.write(f"\nCommand executed:\n{' '.join(cmd)}\n")
+        if additional_options:
+            f.write(f"Additional Options: {additional_options}\n")
     
-    print(f"Running command: {' '.join(cmd)}")
+    print(f"Converting {source_uri} to Intake v2 catalog: {output_path}")
     
     try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            check=True,
-            timeout=600  # 10 minute timeout
-        )
+        # Call convert_to_intake2 directly instead of subprocess
+        convert_to_intake2([source_uri], output_path)
         
-        # Save output logs
-        with open(output_dir / 'stdout.log', 'w') as f:
-            f.write(result.stdout)
-        with open(output_dir / 'stderr.log', 'w') as f:
-            f.write(result.stderr)
-        
+        print(f"✓ Successfully created catalog: {output_path}")
         return 0
     
-    except subprocess.CalledProcessError as e:
+    except Exception as e:
         # Save error logs
+        error_msg = f"Error converting catalog: {str(e)}\n"
         with open(output_dir / 'error.log', 'w') as f:
-            f.write(f"Command failed with exit code {e.returncode}\n\n")
-            f.write(f"STDOUT:\n{e.stdout}\n\n")
-            f.write(f"STDERR:\n{e.stderr}\n")
-        return e.returncode
-    
-    except subprocess.TimeoutExpired:
-        with open(output_dir / 'error.log', 'w') as f:
-            f.write("Command timed out after 10 minutes\n")
+            f.write(error_msg)
+            import traceback
+            f.write(traceback.format_exc())
+        
+        print(f"✗ Error: {e}")
         return 1
 
 
@@ -334,6 +309,9 @@ def run_stac_forge(fields: Dict[str, str], output_dir: Path) -> int:
 
 def main():
     """Main entry point."""
+    # Setup logging for tointake2
+    setup_tointake2_logging(logging.INFO)
+    
     # Get environment variables
     issue_body = os.environ.get('ISSUE_BODY', '')
     issue_number = os.environ.get('ISSUE_NUMBER', 'unknown')
