@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "2catalogs"
 version = "0.1.0"
-description = "Code that generates catalogs for Earth System Model output at DKRZ"
+description = "Code that generates catalogs for Earth System Model output"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {file = "LICENSE"}

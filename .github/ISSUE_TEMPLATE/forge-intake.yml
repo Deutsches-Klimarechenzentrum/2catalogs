@@ -1,0 +1,89 @@
+name: 🔄 Generate Intake v2 Catalog
+description: Request generation of an Intake v2 catalog from an existing Intake v1 catalog or Zarr stores
+title: "[Forge-Intake] "
+labels: ["forge-intake"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Intake v2 Catalog Generation Request
+        
+        This form will trigger an automated pipeline to convert your data source into an Intake v2 catalog.
+        
+        **Supported input types:**
+        - Intake v1 YAML catalogs
+        - Zarr stores (local paths or remote URLs)
+        - Reference Parquet files
+  
+  - type: input
+    id: source-uri
+    attributes:
+      label: Source URI
+      description: URL or path to the input catalog or data store
+      placeholder: "https://digital-earths-global-hackathon.github.io/catalog/online/catalog.yaml"
+    validations:
+      required: true
+
+  - type: input
+    id: output-name
+    attributes:
+      label: Output Catalog Name
+      description: Name for the generated catalog (without extension)
+      placeholder: "my-intake-catalog"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: source-type
+    attributes:
+      label: Source Type
+      description: What type of source are you converting from?
+      options:
+        - Intake v1 YAML Catalog
+        - Zarr Store
+        - Reference Parquet
+        - Auto-detect
+      default: 3
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-options
+    attributes:
+      label: Additional Options
+      description: |
+        Any additional command-line options for tointake2 (one per line).
+        See the tool documentation for available options.
+      placeholder: |
+        --verbose
+        --include-pattern '*.zarr'
+      value: ""
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Brief description of the dataset or catalog
+      placeholder: "Earth System Model output data from PROJECT X"
+
+  - type: checkboxes
+    id: public
+    attributes:
+      label: Visibility
+      description: Should the generated catalog be publicly accessible?
+      options:
+        - label: "Make this catalog publicly accessible"
+          required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        Once submitted, the forge pipeline will:
+        1. ✅ Validate your inputs
+        2. 🔄 Generate the Intake v2 catalog
+        3. 📦 Package the output as a downloadable artifact
+        4. 💬 Comment on this issue with download instructions
+        
+        The artifact will be retained for 90 days.

@@ -1,0 +1,122 @@
+name: Forge Catalog
+
+on:
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  parse-and-forge:
+    name: Parse Issue and Generate Catalog
+    if: contains(github.event.issue.labels.*.name, 'forge-intake') || contains(github.event.issue.labels.*.name, 'forge-stac')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Determine catalog type
+        id: catalog-type
+        run: |
+          if ${{ contains(github.event.issue.labels.*.name, 'forge-intake') }}; then
+            echo "type=intake" >> $GITHUB_OUTPUT
+            echo "extras=intake" >> $GITHUB_OUTPUT
+          elif ${{ contains(github.event.issue.labels.*.name, 'forge-stac') }}; then
+            echo "type=stac" >> $GITHUB_OUTPUT
+            echo "extras=stac" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[${{ steps.catalog-type.outputs.extras }}]"
+
+      - name: Parse issue and generate catalog
+        id: forge
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          CATALOG_TYPE: ${{ steps.catalog-type.outputs.type }}
+        run: |
+          python .github/scripts/forge_parser.py
+
+      - name: Upload generated catalog
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-issue-${{ github.event.issue.number }}
+          path: forge_output/
+          retention-days: 90
+
+      - name: Comment on issue with success
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '✅ **Catalog generation completed successfully!**\n\n';
+            
+            // Read the output info file if it exists
+            if (fs.existsSync('forge_output/info.txt')) {
+              const info = fs.readFileSync('forge_output/info.txt', 'utf8');
+              comment += '**Details:**\n```\n' + info + '\n```\n\n';
+            }
+            
+            comment += '**Download the generated catalog:**\n';
+            comment += `- Go to the [Actions tab](${context.payload.repository.html_url}/actions/runs/${context.runId})\n`;
+            comment += `- Download the artifact: \`catalog-issue-${context.issue.number}\`\n\n`;
+            comment += '**Artifact retention:** 90 days\n';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Comment on issue with failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '❌ **Catalog generation failed!**\n\n';
+            
+            // Try to read error log if it exists
+            if (fs.existsSync('forge_output/error.log')) {
+              const error = fs.readFileSync('forge_output/error.log', 'utf8');
+              comment += '**Error details:**\n```\n' + error + '\n```\n\n';
+            }
+            
+            comment += 'Please check:\n';
+            comment += '- The input URI is valid and accessible\n';
+            comment += '- The issue body follows the template format\n';
+            comment += '- The input catalog format is supported\n\n';
+            comment += `See the [full logs](${context.payload.repository.html_url}/actions/runs/${context.runId}) for more details.`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Add status label
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const label = '${{ job.status }}' === 'success' ? 'forge-complete' : 'forge-failed';
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: [label]
+            });
