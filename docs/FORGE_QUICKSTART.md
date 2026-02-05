@@ -47,7 +47,7 @@ Description: My awesome dataset
 pip install -e ".[intake]"
 
 # Test
-python test_forge.py intake \
+python tests/test_forge.py intake \
   --uri "https://example.com/catalog.yaml" \
   --name "test"
 

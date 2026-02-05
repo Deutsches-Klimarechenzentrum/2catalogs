@@ -5,14 +5,14 @@ on:
     paths:
       - '.github/scripts/forge_parser.py'
       - '.github/workflows/forge-catalog.yml'
-      - 'test_forge.py'
+      - 'tests/test_forge.py'
   push:
     branches:
       - main
     paths:
       - '.github/scripts/forge_parser.py'
       - '.github/workflows/forge-catalog.yml'
-      - 'test_forge.py'
+      - 'tests/test_forge.py'
   workflow_dispatch:
 
 jobs:
@@ -88,7 +88,7 @@ jobs:
 
       - name: Test local forge script - Intake
         run: |
-          python test_forge.py intake \
+          python tests/test_forge.py intake \
             --uri "https://example.com/catalog.yaml" \
             --name "test-intake" \
             --description "Test intake catalog" || echo "Expected failure with remote URL"
@@ -100,7 +100,7 @@ jobs:
 
       - name: Test local forge script - STAC
         run: |
-          python test_forge.py stac \
+          python tests/test_forge.py stac \
             --uri "https://example.com/test.zarr" \
             --collection "test-stac" \
             --project "TEST" \

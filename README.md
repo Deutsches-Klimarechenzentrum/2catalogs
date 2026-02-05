@@ -112,7 +112,7 @@ Don't want to install anything? Use the **Catalog Forge** to generate catalogs a
 4. Submit and wait ~2-5 minutes
 5. Download your generated catalog!
 
-**📖 [Quick Start Guide](FORGE_QUICKSTART.md)** | **📚 [Full Documentation](FORGE.md)** | **💡 [Examples](FORGE_EXAMPLES.md)**
+**📖 [Quick Start Guide](docs/FORGE_QUICKSTART.md)** | **📚 [Full Documentation](docs/FORGE.md)** | **💡 [Examples](docs/FORGE_EXAMPLES.md)**
 
 ### Features
 

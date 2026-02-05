@@ -12,7 +12,7 @@ Use this checklist to verify that the forge mechanism is properly configured in 
 - [ ] `.github/ISSUE_TEMPLATE/forge-stac.yml` exists
 - [ ] `.github/ISSUE_TEMPLATE/config.yml` exists
 - [ ] `.github/scripts/forge_parser.py` exists (and is executable)
-- [ ] `test_forge.py` exists (and is executable)
+- [ ] `tests/test_forge.py` exists (and is executable)
 
 ### Documentation
 
@@ -74,19 +74,19 @@ Check Actions tab to verify:
 python .github/scripts/forge_parser.py --help || echo "Expected: requires env vars"
 
 # Test the local tester
-python test_forge.py --help
+python tests/test_forge.py --help
 
 # Install dependencies
 pip install -e ".[intake,stac]"
 
 # Run a local test (Intake)
-python test_forge.py intake \
+python tests/test_forge.py intake \
   --uri "https://example.com/catalog.yaml" \
   --name "test" \
   --description "Test catalog"
 
 # Run a local test (STAC)
-python test_forge.py stac \
+python tests/test_forge.py stac \
   --uri "https://example.com/data.zarr" \
   --collection "test" \
   --project "TEST" \

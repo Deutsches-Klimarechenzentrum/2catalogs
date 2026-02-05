@@ -44,7 +44,7 @@ This document summarizes all files created for the catalog forge mechanism.
    - Handles errors and logging
    - Creates output artifacts
 
-7. **`test_forge.py`** (Local testing tool, executable)
+7. **`tests/test_forge.py`** (Local testing tool, executable)
    - Simulates issue creation locally
    - Tests both catalog types
    - Allows iteration before creating real issues
@@ -215,10 +215,10 @@ forge_output/
 ### Local Testing
 ```bash
 # Test intake
-python test_forge.py intake --uri <url> --name <name>
+python tests/test_forge.py intake --uri <url> --name <name>
 
 # Test STAC
-python test_forge.py stac --uri <url> --collection <id> --project <id> --description <text>
+python tests/test_forge.py stac --uri <url> --collection <id> --project <id> --description <text>
 
 # Check output
 ls -lh forge_output/
@@ -329,7 +329,7 @@ cat forge_output/info.txt
 6. Create GitHub label
 
 ### When Changing Generators
-- Test locally first with test_forge.py
+- Test locally first with tests/test_forge.py
 - Create PR with test workflow
 - Monitor first few real issues
 - Update documentation

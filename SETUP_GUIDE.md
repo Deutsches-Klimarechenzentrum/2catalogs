@@ -38,7 +38,7 @@
 
 5. **Verify installation**
    ```bash
-   python verify_installation.py
+   python tests/verify_installation.py
    ```
 
 ## Pre-commit Hooks
@@ -95,7 +95,7 @@ Before submitting changes:
 
 2. Verify imports work correctly:
    ```bash
-   python verify_installation.py
+   python tests/verify_installation.py
    ```
 
 3. Test with both optional dependencies installed and uninstalled to ensure lazy imports work

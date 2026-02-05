@@ -61,7 +61,7 @@ This document provides example scenarios for using the catalog forge.
 pip install -e ".[intake]"
 
 # Test with a remote catalog
-python test_forge.py intake \
+python tests/test_forge.py intake \
   --uri "https://digital-earths-global-hackathon.github.io/catalog/online/catalog.yaml" \
   --name "test-catalog" \
   --source-type "Intake v1 YAML Catalog" \
@@ -79,7 +79,7 @@ cat forge_output/info.txt
 pip install -e ".[stac]"
 
 # Test STAC generation
-python test_forge.py stac \
+python tests/test_forge.py stac \
   --uri "https://example.com/data.zarr" \
   --collection "test-collection" \
   --project "EERIE" \
@@ -199,7 +199,7 @@ Want to add a new catalog type? See [SETUP_GUIDE.md](../SETUP_GUIDE.md) for deve
 2. Add handler function in `.github/scripts/forge_parser.py`
 3. Add corresponding label
 4. Update workflow to handle new label
-5. Test locally with `test_forge.py`
+5. Test locally with `tests/test_forge.py`
 
 ### Example: Adding NetCDF Support
 

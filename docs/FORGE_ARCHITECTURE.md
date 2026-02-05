@@ -139,7 +139,7 @@ python -m generators.intake.v2.tointake2 <source_uri> --out <output>
 
 ### 5. Local Testing Tools
 
-#### `test_forge.py`
+#### `tests/test_forge.py`
 
 **Purpose:** Local simulation of forge workflow
 
@@ -151,8 +151,8 @@ python -m generators.intake.v2.tointake2 <source_uri> --out <output>
 
 **Usage:**
 ```bash
-python test_forge.py intake --uri <url> --name <name>
-python test_forge.py stac --uri <url> --collection <id> --project <id>
+python tests/test_forge.py intake --uri <url> --name <name>
+python tests/test_forge.py stac --uri <url> --collection <id> --project <id>
 ```
 
 ### 6. Documentation
@@ -266,7 +266,7 @@ python test_forge.py stac --uri <url> --collection <id> --project <id>
 
 5. **Add Tests**
    ```python
-   # test_forge.py - add newtype subcommand
+   # tests/test_forge.py - add newtype subcommand
    ```
 
 6. **Document**
@@ -345,7 +345,7 @@ Then update the parser to extract and use the field.
 1. Check issue comment for high-level status
 2. Download artifact to inspect outputs
 3. Review GitHub Actions logs for workflow issues
-4. Use `test_forge.py` to reproduce locally
+4. Use `tests/test_forge.py` to reproduce locally
 5. Check generator logs for detailed errors
 
 ### Metrics to Monitor
