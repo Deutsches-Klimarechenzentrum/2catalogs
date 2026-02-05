@@ -56,23 +56,22 @@ def parse_issue_body(body: str) -> Dict[str, str]:
     return fields
 
 
-def load_main_catalog() -> Dict:
-    """Load the main community catalog."""
+def load_main_catalog() -> intake.Catalog:
+    """Load or create the main community catalog as an Intake Catalog object."""
     catalog_path = Path('catalog/main.yaml')
     if not catalog_path.exists():
-        return {
-            'metadata': {
-                'version': 1,
-                'name': '2catalogs Community Catalog',
-                'description': 'Publicly contributed Intake v2 catalogs',
-                'created': datetime.now().date().isoformat(),
-                'last_updated': datetime.now().date().isoformat()
-            },
-            'sources': {}
+        # Create a new empty catalog
+        cat = intake.Catalog()
+        # Set metadata
+        cat.metadata = {
+            'version': 1,
+            'name': '2catalogs Community Catalog',
+            'description': 'Publicly contributed Intake v2 catalogs',
+            'created': datetime.now().date().isoformat(),
+            'last_updated': datetime.now().date().isoformat()
         }
-    
-    with open(catalog_path, 'r') as f:
-        return yaml.safe_load(f)
+        cat.to_yaml_file(str(catalog_path))
+    return intake.Catalog(str(catalog_path))
 
 
 def check_duplicate(catalog_name: str) -> Tuple[bool, Optional[str]]:
@@ -84,12 +83,16 @@ def check_duplicate(catalog_name: str) -> Tuple[bool, Optional[str]]:
     """
     try:
         main_catalog = load_main_catalog()
-        sources = main_catalog.get('sources', {})
-        
-        if catalog_name in sources:
-            existing_uri = sources[catalog_name].get('args', {}).get('urlpath', 'unknown')
+        if catalog_name in main_catalog:
+            entry = main_catalog[catalog_name]
+            existing_uri = None
+            if hasattr(entry, 'args') and isinstance(entry.args, dict):
+                existing_uri = entry.args.get('urlpath') or entry.args.get('path')
+            if not existing_uri and hasattr(entry, 'metadata') and isinstance(entry.metadata, dict):
+                existing_uri = entry.metadata.get('source_uri')
+            if not existing_uri:
+                existing_uri = 'unknown'
             return True, existing_uri
-        
         return False, None
     except Exception as e:
         print(f"Warning: Could not check for duplicates: {e}")
@@ -105,62 +108,49 @@ def add_to_main_catalog(catalog_name: str, catalog_path: Path, fields: Dict[str,
     """
     try:
         main_catalog = load_main_catalog()
-        
         # Check if marked as public
         visibility = fields.get('Visibility', '')
         is_public = 'Make this catalog publicly accessible' in visibility
-        
         if not is_public:
             print(f"Catalog '{catalog_name}' is not marked as public, skipping addition to main catalog")
             return False
-        
         # Check for duplicate
         is_dup, existing_uri = check_duplicate(catalog_name)
         if is_dup:
             print(f"⚠️  Duplicate found: '{catalog_name}' already exists in main catalog")
             print(f"   Existing URI: {existing_uri}")
             return False
-        
         # Read the generated catalog
         if not catalog_path.exists():
             print(f"Generated catalog not found at {catalog_path}")
             return False
-        
-        # Use intake to load the catalog
+        # Use intake to load the catalog (not strictly needed, but kept for validation)
         generated_catalog = intake.open_catalog(str(catalog_path))
-        
         # Extract source info from generated catalog
         source_uri = fields.get('Source URI', '')
         description = fields.get('Description', 'No description provided')
-        
-        # Add entry to main catalog
-        main_catalog['sources'][catalog_name] = {
-            'driver': 'intake.catalog.local.YAMLFileCatalog',
-            'description': description,
-            'args': {
-                'path': f'{{{{ CATALOG_DIR }}}}/generated/{catalog_name}.yaml'
-            },
-            'metadata': {
+        # Add new source using Intake2 API (YAMLFileCatalog entry)
+        from intake.catalog.yaml import YAMLFileCatalog
+        entry = YAMLFileCatalog(
+            name=catalog_name,
+            path=f'{{{{ CATALOG_DIR }}}}/generated/{catalog_name}.yaml',
+            description=description,
+            metadata={
                 'source_uri': source_uri,
                 'added': datetime.now().date().isoformat(),
                 'issue': issue_number,
                 'project': fields.get('Project ID', 'unknown')
             }
-        }
-        
+        )
+        main_catalog.add_entry(entry)
         # Update metadata
-        main_catalog['metadata']['last_updated'] = datetime.now().date().isoformat()
-        
-        # Save updated catalog
-        catalog_dir = Path('catalog')
-        catalog_dir.mkdir(exist_ok=True)
-        
-        with open(catalog_dir / 'main.yaml', 'w') as f:
-            yaml.dump(main_catalog, f, default_flow_style=False, sort_keys=False)
-        
+        meta = dict(main_catalog.metadata)
+        meta['last_updated'] = datetime.now().date().isoformat()
+        main_catalog.metadata = meta
+        # Save catalog
+        main_catalog.to_yaml_file('catalog/main.yaml')
         print(f"✓ Added '{catalog_name}' to main catalog")
         return True
-        
     except Exception as e:
         print(f"Error adding to main catalog: {e}")
         import traceback
