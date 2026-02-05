@@ -229,7 +229,7 @@ def handle_zarr_input(
     
     logger.info("Adding Zarr input '%s'", entryname)
 
-    storage_options: dict = so if not so is None else {}
+    storage_options: dict = so if so is not None else {}
 
     if any(is_reference(a) for a in inp):
         if not all(is_reference(a) for a in inp):
