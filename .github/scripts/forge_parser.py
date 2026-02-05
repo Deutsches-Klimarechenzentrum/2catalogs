@@ -61,7 +61,7 @@ def load_main_catalog() -> intake.Catalog:
     catalog_path = Path('catalog/main.yaml')
     if not catalog_path.exists():
         # Create a new empty catalog
-        cat = intake.Catalog()
+        cat = intake.entry.Catalog()
         # Set metadata
         cat.metadata = {
             'version': 1,
@@ -71,7 +71,7 @@ def load_main_catalog() -> intake.Catalog:
             'last_updated': datetime.now().date().isoformat()
         }
         cat.to_yaml_file(str(catalog_path))
-    return intake.Catalog(str(catalog_path))
+    return intake.open_catalog(str(catalog_path))
 
 
 def check_duplicate(catalog_name: str) -> Tuple[bool, Optional[str]]:
@@ -130,8 +130,7 @@ def add_to_main_catalog(catalog_name: str, catalog_path: Path, fields: Dict[str,
         source_uri = fields.get('Source URI', '')
         description = fields.get('Description', 'No description provided')
         # Add new source using Intake2 API (YAMLFileCatalog entry)
-        from intake.catalog.yaml import YAMLFileCatalog
-        entry = YAMLFileCatalog(
+        entry = intake.entry.Catalog(
             name=catalog_name,
             path=f'{{{{ CATALOG_DIR }}}}/generated/{catalog_name}.yaml',
             description=description,
