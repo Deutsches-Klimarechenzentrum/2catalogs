@@ -130,18 +130,18 @@ def add_to_main_catalog(catalog_name: str, catalog_path: Path, fields: Dict[str,
         source_uri = fields.get('Source URI', '')
         description = fields.get('Description', 'No description provided')
         # Add new source using Intake2 API (YAMLFileCatalog entry)
-        entry = intake.entry.Catalog(
-            name=catalog_name,
+        from intake.readers.readers import YAMLCatalogReader
+        entry = YAMLCatalogReader(
             path=f'{{{{ CATALOG_DIR }}}}/generated/{catalog_name}.yaml',
-            description=description,
             metadata={
                 'source_uri': source_uri,
                 'added': datetime.now().date().isoformat(),
                 'issue': issue_number,
+                'description': description,
                 'project': fields.get('Project ID', 'unknown')
             }
         )
-        main_catalog.add_entry(entry)
+        main_catalog[name]=entry
         # Update metadata
         meta = dict(main_catalog.metadata)
         meta['last_updated'] = datetime.now().date().isoformat()
