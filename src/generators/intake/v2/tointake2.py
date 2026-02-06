@@ -400,7 +400,9 @@ def convert_to_intake2(inputs: list[str], output: str | None):
         catalog_input = None
         try:
             catalog_input = yaml.safe_load(fsspec.open(inp).open())
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to load '{inp}' as YAML: {e}")
+            logger.debug("Treating as data input")
             pass
 
         if isinstance(catalog_input, dict) and "sources" in catalog_input:

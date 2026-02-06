@@ -64,7 +64,7 @@ pip install -e ".[intake]"
 python tests/test_forge.py intake \
   --uri "https://digital-earths-global-hackathon.github.io/catalog/online/catalog.yaml" \
   --name "test-catalog" \
-  --source-type "Intake v1 YAML Catalog" \
+   # --source-type removed
   --description "Test conversion"
 
 # Check output
