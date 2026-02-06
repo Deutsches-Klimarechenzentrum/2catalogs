@@ -1,5 +1,12 @@
 aliases: {}
 data:
+  81bffdba8d73cc9a:
+    datatype: intake.readers.datatypes:YAMLFile
+    kwargs:
+      storage_options: null
+      url: '{{ CATALOG_DIR }}/generated/asdfds.yaml'
+    metadata: {}
+    user_parameters: {}
   903be6c7a31a7b36:
     datatype: intake.readers.datatypes:YAMLFile
     kwargs:
@@ -8,6 +15,19 @@ data:
     metadata: {}
     user_parameters: {}
 entries:
+  asdfds:
+    kwargs:
+      args:
+      - '{data(81bffdba8d73cc9a)}'
+    metadata:
+      added: '2026-02-06'
+      description: ''
+      issue: '11'
+      project: unknown
+      source_uri: https://eerie.cloud.dkrz.de/datasets/orcestra_1250m_2d_hpz12/kerchunk
+    output_instance: intake.readers.entry:Catalog
+    reader: intake.readers.readers:YAMLCatalogReader
+    user_parameters: {}
   test:
     kwargs:
       args:
@@ -24,7 +44,7 @@ entries:
 metadata:
   created: '2026-02-05'
   description: Publicly contributed Intake v2 catalogs
-  last_updated: '2026-02-05'
+  last_updated: '2026-02-06'
   name: 2catalogs Community Catalog
   version: 1
 user_parameters:
