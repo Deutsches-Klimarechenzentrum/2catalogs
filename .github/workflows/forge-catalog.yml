@@ -1,62 +1,60 @@
-name: Forge Catalog
+name: Forge Catalog (DISABLED - Use GitLab)
+
+# ============================================================================
+# THIS WORKFLOW IS DISABLED
+# ============================================================================
+# Catalog generation (Forge) has been moved to GitLab CI/CD
+# Issue-based forge automation now runs on GitLab
+# 
+# To use the forge system:
+# 1. Create issues on GitLab with forge templates
+# 2. Or trigger manual pipeline runs in GitLab CI/CD
+#
+# GitHub Actions now handles only testing and basic CI
+# ============================================================================
 
 on:
-  issues:
-    types: [opened]
+  # Disabled: issues trigger moved to GitLab
+  # issues:
+  #   types: [opened]
+  
+  # This workflow is now disabled
+  workflow_dispatch:
+    inputs:
+      note:
+        description: 'This workflow is disabled. Use GitLab for forge operations.'
+        required: false
 
 permissions:
   issues: write
-  contents: write  # Need write permission to commit catalog updates
+  contents: write
 
 jobs:
-  check-trigger:
-    name: Check Workflow Trigger
+  disabled-notice:
+    name: Forge Has Moved to GitLab
     runs-on: ubuntu-latest
-    # This job always runs to help debug
+    if: false  # Always skip this workflow
     steps:
-      - name: Show trigger information
+      - name: Notice
         run: |
-          echo "=== Workflow Trigger Analysis ==="
-          echo "Event: ${{ github.event_name }}"
-          echo "Action: ${{ github.event.action }}"
-          echo "Issue number: ${{ github.event.issue.number }}"
-          echo "Issue title: '${{ github.event.issue.title }}'"
-          echo "Issue state: ${{ github.event.issue.state }}"
+          echo "============================================"
+          echo "Forge workflow has been moved to GitLab CI"
+          echo "============================================"
           echo ""
-          echo "=== Title Checks ==="
-          echo "Starts with [Forge-Intake]: ${{ startsWith(github.event.issue.title, '[Forge-Intake]') }}"
-          echo "Starts with [Forge-STAC]: ${{ startsWith(github.event.issue.title, '[Forge-STAC]') }}"
-          echo "Starts with [Forge-All]: ${{ startsWith(github.event.issue.title, '[Forge-All]') }}"
+          echo "To generate catalogs:"
+          echo "1. Go to GitLab repository"
+          echo "2. Create an issue using forge templates"
+          echo "3. Or run manual pipeline in CI/CD > Pipelines"
           echo ""
-          echo "=== Label Checks ==="
-          echo "All labels: ${{ toJSON(github.event.issue.labels.*.name) }}"
-          echo "Has forge-intake: ${{ contains(github.event.issue.labels.*.name, 'forge-intake') }}"
-          echo "Has forge-stac: ${{ contains(github.event.issue.labels.*.name, 'forge-stac') }}"
+          echo "GitHub Actions now handles:"
+          echo "- Testing on multiple Python versions"
+          echo "- Linting and code quality"
+          echo "- Building packages"
           echo ""
-          echo "=== Condition Result ==="
-          SHOULD_RUN="${{ 
-            github.event.issue.state == 'open' &&
-            (startsWith(github.event.issue.title, '[Forge-Intake]') ||
-             startsWith(github.event.issue.title, '[Forge-STAC]') ||
-             startsWith(github.event.issue.title, '[Forge-All]') ||
-             contains(github.event.issue.labels.*.name, 'forge-intake') ||
-             contains(github.event.issue.labels.*.name, 'forge-stac'))
-          }}"
-          echo "Should run parse-and-forge: $SHOULD_RUN"
-          echo "================================"
-
-  parse-and-forge:
-    name: Parse Issue and Generate Catalog
-    needs: check-trigger
-    # Always run for issues with forge titles, check labels for additional confirmation
-    if: |
-      github.event.issue.state == 'open' &&
-      (startsWith(github.event.issue.title, '[Forge-Intake]') ||
-       startsWith(github.event.issue.title, '[Forge-STAC]') ||
-       startsWith(github.event.issue.title, '[Forge-All]') ||
-       contains(github.event.issue.labels.*.name, 'forge-intake') ||
-       contains(github.event.issue.labels.*.name, 'forge-stac'))
-    runs-on: ubuntu-latest
+          echo "GitLab CI/CD now handles:"
+          echo "- Catalog generation (forge)"
+          echo "- GitLab Pages deployment"
+          echo "- Issue-based automation"
     
     steps:
       - name: Debug issue information

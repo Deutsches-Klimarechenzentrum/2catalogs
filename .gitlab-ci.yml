@@ -1,296 +1,105 @@
 # ============================================================================
-# GitLab CI/CD Configuration for Catalog Generation Project
+# GitLab CI/CD Configuration - Catalog Generation (Forge) Pipeline
 # ============================================================================
 # 
-# PLACEHOLDERS TO CONFIGURE:
-# - <DOCKER_IMAGE>: Docker image for Python environment (e.g., python:3.11-slim)
-# - <PYTHON_VERSION>: Python version(s) to test (e.g., 3.9, 3.10, 3.11, 3.12)
-# - <GITLAB_REGISTRY>: Your GitLab container registry URL
-# - <PROJECT_ID>: Your GitLab project ID
-# - <PAGES_BRANCH>: Branch for GitLab Pages deployment (usually 'main')
-# - <ENVIRONMENT_NAME>: Deployment environment name (e.g., production, staging)
-# - <DEPLOY_URL>: URL where the catalog will be deployed
-# - <SLACK_WEBHOOK_URL>: Slack webhook for notifications (optional)
-# - <COVERAGE_THRESHOLD>: Minimum code coverage percentage (e.g., 80)
-# - <ARTIFACT_RETENTION_DAYS>: Days to keep artifacts (e.g., 90)
-# - <API_BASE_URL>: Base URL for any external APIs used
+# This pipeline is responsible for:
+# - Catalog generation (Forge) from GitLab issues
+# - GitLab Pages deployment
+# - Manual forge jobs
+#
+# Testing and building are handled by GitHub Actions
+# All jobs use Docker with UV for fast, cached dependency management
 #
 # ============================================================================
 
 # Workflow configuration
 workflow:
   rules:
-    # Run pipeline for merge requests
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    # Run pipeline for commits to main/develop branches
-    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"
-    # Run for tags
-    - if: $CI_COMMIT_TAG
-    # Allow manual pipeline runs
+    # Run pipeline for commits to main branch (for Pages deployment)
+    - if: $CI_COMMIT_BRANCH == "main"
+    # Allow manual pipeline runs (for forge jobs)
     - if: $CI_PIPELINE_SOURCE == "web"
-    # Run for scheduled pipelines
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+    # Run for issue events (GitLab webhook integration)
+    - if: $CI_PIPELINE_SOURCE == "trigger"
 
 # Define stages for the pipeline
 stages:
-  - lint
-  - test
-  - build
+  - setup
   - forge
   - deploy
-  - notify
 
-# Global variables - CONFIGURE THESE
+# Global variables
 variables:
-  # Python configuration
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  # UV and Python configuration
+  UV_VERSION: "0.5"
+  PYTHON_VERSION: "3.12"
+  BASE_LAYER: bookworm-slim
+  UV_LINK_MODE: copy  # GitLab CI needs copy mode for separate mountpoints
   
-  # Docker registry settings
-  DOCKER_REGISTRY: "<GITLAB_REGISTRY>"  # e.g., registry.gitlab.com/yourgroup/yourproject
-  DOCKER_IMAGE_NAME: "$DOCKER_REGISTRY:$CI_COMMIT_REF_SLUG"
+  # Cache directories
+  UV_CACHE_DIR: .uv-cache
+  UV_INSTALL_DIR: .local/bin
   
   # Deployment settings
-  PAGES_BRANCH: "<main>"  # e.g., main
-  DEPLOY_ENVIRONMENT: "<ENVIRONMENT_NAME>"  # e.g., production, staging
-  DEPLOY_URL: "<DEPLOY_URL>"  # e.g., https://yourproject.gitlab.io
+  PAGES_BRANCH: "main"
   
-  # API endpoints
-  API_BASE_URL: "<API_BASE_URL>"  # e.g., https://api.example.com
-   
   # Artifact retention
-  ARTIFACT_RETENTION: "<ARTIFACT_RETENTION_DAYS> days"  # e.g., 90 days
+  ARTIFACT_RETENTION: "5 days"
   
-  # Coverage settings
-  COVERAGE_THRESHOLD: "<COVERAGE_THRESHOLD>"  # e.g., 80
-
-# Cache configuration for faster builds
-cache:
-  key: "${CI_COMMIT_REF_SLUG}"
-  paths:
-    - .cache/pip
-    - venv/
+  # Debian
+  DEBIAN_FRONTEND: noninteractive
 
 # ============================================================================
 # TEMPLATES
 # ============================================================================
 
-.python_base:
-  image: <DOCKER_IMAGE>  # e.g., python:3.11-slim
-  before_script:
-    - python --version
-    - pip install --upgrade pip
-    - pip install virtualenv
-    - virtualenv venv
-    - source venv/bin/activate
+.defaults:
+  image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
+  tags:
+    - docker-any-image
+  extends: [".cache"]
 
-.test_template:
-  extends: .python_base
-  stage: test
-  script:
-    - pip install -e ".[all]"
-    - pip install pytest pytest-cov
-    - python tests/verify_installation.py
-    - pytest tests/ --cov=src --cov-report=xml --cov-report=html --cov-report=term
-  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
-  artifacts:
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: coverage.xml
+.cache:
+  cache:
+    key:
+      files:
+        - uv.lock
     paths:
-      - htmlcov/
-      - coverage.xml
-    expire_in: 30 days
+      - $UV_CACHE_DIR
+      - $UV_INSTALL_DIR
 
 # ============================================================================
-# LINT STAGE
+# SETUP STAGE - Dependency Installation
 # ============================================================================
 
-lint:check:
-  extends: .python_base
-  stage: lint
+uv:setup:
+  extends: .defaults
+  stage: setup
   script:
-    - pip install ruff black isort pylint mypy || true
-    - echo "=== Running Ruff linter ==="
-    - ruff check src/ --exit-zero || true
-    - echo "=== Checking code formatting with Black ==="
-    - black --check src/ || true
-    - echo "=== Checking import sorting with isort ==="
-    - isort --check-only src/ || true
-    - echo "=== Running PyLint ==="
-    - pylint src/ --exit-zero || true
-    - echo "=== Running MyPy type checker ==="
-    - mypy src/ --ignore-missing-imports --exit-zero || true
-    - echo "=== Checking for common issues ==="
-    - "! grep -r 'import *' src/ && echo '✓ No wildcard imports' || echo '⚠ Wildcard imports found'"
-    - "! grep -r 'print(' src/ && echo '✓ No print statements in src/' || echo '⚠ Print statements found'"
-  allow_failure: true
-
-lint:syntax:
-  extends: .python_base
-  stage: lint
-  script:
-    - pip install -e ".[all]"
-    - python -m py_compile .gitlab/scripts/forge_parser.py || python -m py_compile .github/scripts/forge_parser.py
-    - echo "✓ Forge parser syntax OK"
-    - python -c "import generators" && echo "✓ generators import OK"
-    - python -c "import generators.intake.v2.tointake2" && echo "✓ tointake2 import OK"
-    - python -c "import generators.stac" && echo "✓ stac import OK"
+    - uv sync --all-extras
+    - uv cache prune --ci
 
 # ============================================================================
-# TEST STAGE - Multiple Python Versions
-# ============================================================================
-
-test:python39:
-  extends: .test_template
-  image: python:3.9-slim
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-
-test:python310:
-  extends: .test_template
-  image: python:3.10-slim
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-
-test:python311:
-  extends: .test_template
-  image: python:3.11-slim
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-
-test:python312:
-  extends: .test_template
-  image: python:3.12-slim
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-
-test:forge-parser:
-  extends: .python_base
-  stage: test
-  image: python:3.11-slim
-  script:
-    - pip install -e ".[all]"
-    - pip install pyyaml
-    - echo "=== Testing Intake Parser (dry run) ==="
-    - |
-      export ISSUE_BODY="### Source URI
-      https://digital-earths-global-hackathon.github.io/catalog/online/catalog.yaml
-      
-      ### Output Catalog Name
-      test-catalog
-      
-      ### Source Type
-      Intake v1 YAML Catalog
-      
-      ### Description
-      Test catalog for CI"
-    - export ISSUE_NUMBER="test-ci-intake"
-    - export CATALOG_TYPE="intake"
-    - python .gitlab/scripts/forge_parser.py || python .github/scripts/forge_parser.py || echo "✓ Expected failure with remote URL"
-    - echo "=== Testing STAC Parser (dry run) ==="
-    - |
-      export ISSUE_BODY="### Data Source URI
-      https://example.com/test.zarr
-      
-      ### Collection ID
-      test-collection
-      
-      ### Project ID
-      TEST
-      
-      ### Collection Description
-      Test STAC collection for CI"
-    - export ISSUE_NUMBER="test-ci-stac"
-    - export CATALOG_TYPE="stac"
-    - python .gitlab/scripts/forge_parser.py || python .github/scripts/forge_parser.py
-    - |
-      if [ -d "forge_output" ]; then
-        echo "✓ Forge output created successfully"
-        ls -lah forge_output/
-        if [ -f "forge_output/info.txt" ]; then
-          cat forge_output/info.txt
-        fi
-      fi
-  artifacts:
-    paths:
-      - forge_output/
-    expire_in: 7 days
-
-# ============================================================================
-# BUILD STAGE
-# ============================================================================
-
-build:package:
-  extends: .python_base
-  stage: build
-  script:
-    - pip install build twine
-    - python -m build
-    - twine check dist/*
-    - echo "✓ Package built successfully"
-  artifacts:
-    paths:
-      - dist/
-    expire_in: 30 days
-  only:
-    - main
-    - tags
-    - develop
-
-build:docker:
-  stage: build
-  image: docker:24-cli
-  services:
-    - docker:24-dind
-  variables:
-    DOCKER_HOST: tcp://docker:2376
-    DOCKER_TLS_CERTDIR: "/certs"
-    DOCKER_TLS_VERIFY: 1
-    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
-  before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  script:
-    - docker build -t $DOCKER_IMAGE_NAME .
-    - docker tag $DOCKER_IMAGE_NAME $DOCKER_REGISTRY:latest
-    - docker push $DOCKER_IMAGE_NAME
-    - docker push $DOCKER_REGISTRY:latest
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-    - if: '$CI_COMMIT_TAG'
-  # Uncomment when Dockerfile is added to the repository
-  # only:
-  #   changes:
-  #     - Dockerfile
-  #     - requirements.txt
-  #     - pyproject.toml
-
-# ============================================================================
-# FORGE STAGE - Manual Catalog Generation Jobs
+# FORGE STAGE - Catalog Generation with Docker + UV
 # ============================================================================
 
 .forge_template:
-  extends: .python_base
+  extends: .defaults
   stage: forge
-  image: python:3.11-slim
+  needs: ["uv:setup"]
   variables:
     # Override these when triggering manually
     ISSUE_NUMBER: "${CI_JOB_ID}"
     CATALOG_TYPE: "intake"  # or "stac" or "all"
   script:
-    - pip install -e ".[all]"
-    - pip install pyyaml
+    - uv sync --all-extras
     - |
       if [ -z "$ISSUE_BODY" ]; then
         echo "❌ Error: ISSUE_BODY variable is required"
         echo "Please provide the catalog specification in ISSUE_BODY variable"
         exit 1
       fi
-    - python .gitlab/scripts/forge_parser.py || python .github/scripts/forge_parser.py
+    - uv run python .gitlab/scripts/forge_parser.py
     - |
       if [ -d "forge_output" ]; then
         echo "✓ Forge output created successfully"
@@ -335,17 +144,21 @@ forge:all:
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: manual
 
+
 forge:auto-commit:
-  extends: .python_base
+  extends: .defaults
   stage: forge
-  image: python:3.11-slim
   needs:
+    - job: uv:setup
     - job: forge:intake
       optional: true
     - job: forge:stac
       optional: true
     - job: forge:all
       optional: true
+  before_script:
+    # Install git for auto-commit
+    - apt-get update && apt-get install -y git
   script:
     - |
       if [ -f "forge_output/added_to_main.txt" ]; then
@@ -365,124 +178,314 @@ forge:auto-commit:
   # Requires CI_PUSH_TOKEN variable with write access
 
 # ============================================================================
-# DEPLOY STAGE
+# DEPLOY STAGE - GitLab Pages
 # ============================================================================
 
-deploy:pages:
+pages:
+  extends: .defaults
   stage: deploy
-  image: alpine:latest
+  needs: ["uv:setup"]
   script:
-    - mkdir -p public
-    - cp index.html public/ || echo "No index.html found"
-    - cp -r catalog public/ || echo "No catalog directory found"
+    # Copy entire docs directory to public (contains all pages content)
+    - cp -r docs public
+    
+    # Copy catalog directory (generated by forge jobs)
+    - cp -r catalog public/ || echo "No catalog directory found yet"
+    
+    # Copy README to public root
+    - cp README.md public/ || echo "No README.md found"
+    
+    # Create documentation index page
     - |
-      if [ -d "htmlcov" ]; then
-        cp -r htmlcov public/coverage
-      fi
-    - echo "Deployed to GitLab Pages"
+      cat > public/documentation.html << 'EOF'
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>2catalogs Documentation</title>
+          <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown.min.css">
+          <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+          <style>
+              body {
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+                  margin: 0;
+                  padding: 0;
+                  display: flex;
+                  min-height: 100vh;
+                  background: #f6f8fa;
+              }
+              .sidebar {
+                  width: 280px;
+                  background: #24292e;
+                  color: white;
+                  padding: 20px;
+                  overflow-y: auto;
+                  position: fixed;
+                  height: 100vh;
+              }
+              .sidebar h2 {
+                  color: #58a6ff;
+                  font-size: 1.3em;
+                  margin: 20px 0 10px 0;
+                  border-bottom: 1px solid #444;
+                  padding-bottom: 5px;
+              }
+              .sidebar h2:first-child {
+                  margin-top: 0;
+              }
+              .sidebar ul {
+                  list-style: none;
+                  padding: 0;
+                  margin: 0 0 20px 0;
+              }
+              .sidebar li {
+                  margin: 5px 0;
+              }
+              .sidebar a {
+                  color: #c9d1d9;
+                  text-decoration: none;
+                  display: block;
+                  padding: 5px 10px;
+                  border-radius: 5px;
+                  transition: background 0.2s;
+              }
+              .sidebar a:hover {
+                  background: #30363d;
+                  color: #58a6ff;
+              }
+              .sidebar a.active {
+                  background: #388bfd;
+                  color: white;
+              }
+              .content {
+                  margin-left: 280px;
+                  flex: 1;
+                  padding: 40px;
+                  max-width: 1200px;
+              }
+              .markdown-body {
+                  background: white;
+                  padding: 40px;
+                  border-radius: 8px;
+                  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+              }
+              .home-content {
+                  background: white;
+                  padding: 40px;
+                  border-radius: 8px;
+                  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+              }
+              .home-content h1 {
+                  color: #24292e;
+                  border-bottom: 2px solid #58a6ff;
+                  padding-bottom: 10px;
+              }
+              .doc-grid {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                  gap: 20px;
+                  margin-top: 30px;
+              }
+              .doc-card {
+                  border: 1px solid #d0d7de;
+                  border-radius: 8px;
+                  padding: 20px;
+                  transition: all 0.2s;
+              }
+              .doc-card:hover {
+                  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                  border-color: #58a6ff;
+              }
+              .doc-card h3 {
+                  color: #24292e;
+                  margin-top: 0;
+              }
+              .doc-card a {
+                  color: #0969da;
+                  text-decoration: none;
+                  font-weight: 600;
+              }
+              .doc-card a:hover {
+                  text-decoration: underline;
+              }
+              @media (max-width: 768px) {
+                  .sidebar {
+                      display: none;
+                  }
+                  .content {
+                      margin-left: 0;
+                      padding: 20px;
+                  }
+              }
+          </style>
+      </head>
+      <body>
+          <div class="sidebar">
+              <h1 style="color: white; font-size: 1.5em; margin-bottom: 20px;">📚 Documentation</h1>
+              
+              <h2>🏠 Main</h2>
+              <ul>
+                  <li><a href="#" onclick="showHome(); return false;">Home</a></li>
+                  <li><a href="/" target="_blank">Catalog Browser</a></li>
+                  <li><a href="#README.md" onclick="loadDoc('README.md'); return false;">README</a></li>
+              </ul>
+              
+              <h2>📘 User Guides</h2>
+              <ul id="forge-docs"></ul>
+              
+              <h2>⚙️ CI/CD Docs</h2>
+              <ul id="ci-docs"></ul>
+              
+              <h2>🔧 GitLab Setup</h2>
+              <ul id="gitlab-docs"></ul>
+          </div>
+          
+          <div class="content">
+              <div id="home-view" class="home-content">
+                  <h1>2catalogs Documentation</h1>
+                  <p>Welcome to the 2catalogs documentation. Browse through the guides using the sidebar or explore the sections below.</p>
+                  
+                  <div class="doc-grid">
+                      <div class="doc-card">
+                          <h3>🚀 Quick Start</h3>
+                          <p>Get started with catalog generation using the Forge system.</p>
+                          <a href="#docs/FORGE_QUICKSTART.md" onclick="loadDoc('docs/FORGE_QUICKSTART.md'); return false;">Read Guide →</a>
+                      </div>
+                      
+                      <div class="doc-card">
+                          <h3>📖 Forge Guide</h3>
+                          <p>Complete guide to using the catalog generation system.</p>
+                          <a href="#docs/FORGE.md" onclick="loadDoc('docs/FORGE.md'); return false;">Read Guide →</a>
+                      </div>
+                      
+                      <div class="doc-card">
+                          <h3>🏗️ Architecture</h3>
+                          <p>Understand the CI/CD pipeline architecture and design.</p>
+                          <a href="#ci/CI_ARCHITECTURE.md" onclick="loadDoc('ci/CI_ARCHITECTURE.md'); return false;">View Architecture →</a>
+                      </div>
+                      
+                      <div class="doc-card">
+                          <h3>📦 UV Migration</h3>
+                          <p>Learn about the modern UV-based CI/CD setup.</p>
+                          <a href="#ci/gitlab/UV_MIGRATION_GUIDE.md" onclick="loadDoc('ci/gitlab/UV_MIGRATION_GUIDE.md'); return false;">Migration Guide →</a>
+                      </div>
+                  </div>
+              </div>
+              
+              <div id="markdown-content" class="markdown-body" style="display: none;"></div>
+          </div>
+          
+          <script>
+              // Document lists
+              const forgeDocs = [
+                  'FORGE.md', 'FORGE_QUICKSTART.md', 'FORGE_ARCHITECTURE.md', 
+                  'FORGE_EXAMPLES.md', 'FORGE_CHECKLIST.md', 'FORGE_SUMMARY.md',
+                  'COMMUNITY_CATALOG.md'
+              ];
+              
+              const ciDocs = [
+                  'CI_ARCHITECTURE.md', 'CI_SPLIT_GUIDE.md', 'CI_SPLIT_SUMMARY.md'
+              ];
+              
+              const gitlabDocs = [
+                  'UV_MIGRATION_GUIDE.md', 'README.md'
+              ];
+              
+              // Populate sidebar
+              function populateSidebar() {
+                  const forgeList = document.getElementById('forge-docs');
+                  const ciList = document.getElementById('ci-docs');
+                  const gitlabList = document.getElementById('gitlab-docs');
+                  
+                  forgeDocs.forEach(doc => {
+                      const li = document.createElement('li');
+                      const a = document.createElement('a');
+                      a.href = '#docs/' + doc;
+                      a.textContent = doc.replace('.md', '').replace(/_/g, ' ');
+                      a.onclick = (e) => { e.preventDefault(); loadDoc('docs/' + doc); };
+                      li.appendChild(a);
+                      forgeList.appendChild(li);
+                  });
+                  
+                  ciDocs.forEach(doc => {
+                      const li = document.createElement('li');
+                      const a = document.createElement('a');
+                      a.href = '#ci/' + doc;
+                      a.textContent = doc.replace('.md', '').replace(/_/g, ' ');
+                      a.onclick = (e) => { e.preventDefault(); loadDoc('ci/' + doc); };
+                      li.appendChild(a);
+                      ciList.appendChild(li);
+                  });
+                  
+                  gitlabDocs.forEach(doc => {
+                      const li = document.createElement('li');
+                      const a = document.createElement('a');
+                      a.href = '#ci/gitlab/' + doc;
+                      a.textContent = doc.replace('.md', '').replace(/_/g, ' ');
+                      a.onclick = (e) => { e.preventDefault(); loadDoc('ci/gitlab/' + doc); };
+                      li.appendChild(a);
+                      gitlabList.appendChild(li);
+                  });
+              }
+              
+              // Load markdown document
+              async function loadDoc(path) {
+                  const homeView = document.getElementById('home-view');
+                  const contentDiv = document.getElementById('markdown-content');
+                  
+                  homeView.style.display = 'none';
+                  contentDiv.style.display = 'block';
+                  contentDiv.innerHTML = '<p>Loading...</p>';
+                  
+                  try {
+                      const response = await fetch(path);
+                      if (!response.ok) throw new Error('Document not found');
+                      
+                      const markdown = await response.text();
+                      contentDiv.innerHTML = marked.parse(markdown);
+                      
+                      // Update active link
+                      document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+                      document.querySelector(`a[href="#${path}"]`)?.classList.add('active');
+                      
+                      // Scroll to top
+                      window.scrollTo(0, 0);
+                  } catch (error) {
+                      contentDiv.innerHTML = `<p>Error loading document: ${error.message}</p>`;
+                  }
+              }
+              
+              // Show home view
+              function showHome() {
+                  document.getElementById('home-view').style.display = 'block';
+                  document.getElementById('markdown-content').style.display = 'none';
+                  document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+                  document.querySelector('.sidebar a[href="#"]')?.classList.add('active');
+              }
+              
+              // Initialize
+              populateSidebar();
+              
+              // Handle initial hash
+              if (window.location.hash) {
+                  const path = window.location.hash.substring(1);
+                  loadDoc(path);
+              }
+          </script>
+      </body>
+      </html>
+      EOF
+    
+    - echo "✓ Deployed to GitLab Pages with documentation"
+    - ls -la public/
   artifacts:
     paths:
       - public
     expire_in: 30 days
   rules:
     - if: '$CI_COMMIT_BRANCH == $PAGES_BRANCH'
+  environment:
+    name: production
+    url: https://$CI_PROJECT_NAMESPACE.gitlab-pages.dkrz.de/-/$CI_PROJECT_NAME/
   # For GitLab Pages, artifacts must be in 'public' directory
-
-# ============================================================================
-# NOTIFY STAGE
-# ============================================================================
-
-notify:slack:
-  stage: notify
-  image: curlimages/curl:latest
-  script:
-    - |
-      if [ "$CI_JOB_STATUS" == "success" ]; then
-        STATUS_EMOJI="✅"
-        STATUS_TEXT="succeeded"
-        COLOR="good"
-      else
-        STATUS_EMOJI="❌"
-        STATUS_TEXT="failed"
-        COLOR="danger"
-      fi
-    - |
-      curl -X POST ${SLACK_WEBHOOK_URL} \
-        -H 'Content-Type: application/json' \
-        -d "{
-          \"attachments\": [{
-            \"color\": \"${COLOR}\",
-            \"title\": \"${STATUS_EMOJI} Pipeline ${STATUS_TEXT}\",
-            \"text\": \"Project: ${CI_PROJECT_NAME}\\nBranch: ${CI_COMMIT_REF_NAME}\\nCommit: ${CI_COMMIT_SHORT_SHA}\",
-            \"footer\": \"GitLab CI\",
-            \"footer_icon\": \"https://about.gitlab.com/images/press/logo/png/gitlab-icon-rgb.png\",
-            \"fields\": [
-              {\"title\": \"Author\", \"value\": \"${GITLAB_USER_NAME}\", \"short\": true},
-              {\"title\": \"Pipeline\", \"value\": \"<${CI_PIPELINE_URL}|#${CI_PIPELINE_ID}>\", \"short\": true}
-            ]
-          }]
-        }"
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main" && $SLACK_WEBHOOK_URL && $SLACK_WEBHOOK_URL != "<SLACK_WEBHOOK_URL>"'
-      when: on_failure
-    - if: '$CI_COMMIT_BRANCH == "main" && $SLACK_WEBHOOK_URL && $SLACK_WEBHOOK_URL != "<SLACK_WEBHOOK_URL>"'
-      when: on_success
-  allow_failure: true
-  # Requires SLACK_WEBHOOK_URL variable
-
-notify:email:
-  stage: notify
-  image: python:3.11-slim
-  script:
-    - echo "Pipeline finished with status: ${CI_JOB_STATUS}"
-    - echo "Use GitLab's built-in email notifications (Settings > Integrations > Pipelines emails)"
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-      when: on_failure
-  allow_failure: true
-
-# ============================================================================
-# SCHEDULED JOBS
-# ============================================================================
-
-# Example: Nightly comprehensive test
-scheduled:comprehensive-test:
-  extends: .python_base
-  stage: test
-  script:
-    - pip install -e ".[all]"
-    - pytest tests/ -v --tb=long
-    - echo "✓ Comprehensive tests completed"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "comprehensive"'
-  allow_failure: true
-
-# Example: Weekly catalog validation
-scheduled:validate-catalogs:
-  extends: .python_base
-  stage: test
-  script:
-    - pip install -e ".[all]"
-    - |
-      echo "Validating all catalogs..."
-      for catalog_file in catalog/*.yaml; do
-        echo "Checking $catalog_file"
-        python -c "import yaml; yaml.safe_load(open('$catalog_file'))" && echo "✓ Valid YAML" || echo "✗ Invalid YAML"
-      done
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "validation"'
-  allow_failure: true
-
-# ============================================================================
-# CLEANUP JOB
-# ============================================================================
-
-cleanup:old-artifacts:
-  stage: .post
-  image: alpine:latest
-  script:
-    - echo "Cleanup job - use GitLab API to delete old artifacts if needed"
-    - echo "Configure artifact expiration policies in: Settings > CI/CD > Artifacts"
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "cleanup"'
-  allow_failure: true

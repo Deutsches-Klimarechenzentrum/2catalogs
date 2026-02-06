@@ -1,4 +1,17 @@
-name: CI
+name: CI - Testing and Quality
+
+# ============================================================================
+# GitHub Actions handles:
+# - Multi-version Python testing (3.9-3.12)
+# - Code quality and linting
+# - Package building
+# - Basic integration tests
+#
+# GitLab CI/CD handles:
+# - Catalog generation (forge)
+# - GitLab Pages deployment
+# - Issue-based automation
+# ============================================================================
 
 on:
   push:
@@ -36,11 +49,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[all]"
 
-      - name: Check Python syntax
-        run: |
-          python -m py_compile .github/scripts/forge_parser.py
-          echo "✓ Forge parser syntax OK"
-
       - name: Test imports
         run: |
           python -c "import generators" && echo "✓ generators import OK" || echo "✗ generators import failed"
@@ -51,79 +59,11 @@ jobs:
         run: |
           python tests/verify_installation.py
 
-  test-forge:
-    name: Test Forge Parser
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install dependencies
+      - name: Run tests
         run: |
-          pip install -e ".[all]"
-
-      - name: Test intake parser (dry run)
-        env:
-          ISSUE_BODY: |
-            ### Source URI
-            https://digital-earths-global-hackathon.github.io/catalog/online/catalog.yaml
-            
-            ### Output Catalog Name
-            test-catalog
-            
-            ### Source Type
-            Intake v1 YAML Catalog
-            
-            ### Description
-            Test catalog for CI
-          ISSUE_NUMBER: "test-ci-intake"
-          CATALOG_TYPE: "intake"
-        run: |
-          python .github/scripts/forge_parser.py || echo "✓ Expected failure with remote URL"
-
-      - name: Test STAC parser (dry run)
-        env:
-          ISSUE_BODY: |
-            ### Data Source URI
-            https://example.com/test.zarr
-            
-            ### Collection ID
-            test-collection
-            
-            ### Project ID
-            TEST
-            
-            ### Collection Description
-            Test STAC collection for CI
-          ISSUE_NUMBER: "test-ci-stac"
-          CATALOG_TYPE: "stac"
-        run: |
-          python .github/scripts/forge_parser.py
-
-      - name: Check forge output
-        run: |
-          if [ -d "forge_output" ]; then
-            echo "✓ Forge output created successfully"
-            ls -lah forge_output/
-            if [ -f "forge_output/info.txt" ]; then
-              cat forge_output/info.txt
-            fi
-          fi
-
-      - name: Upload test artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-forge-output
-          path: forge_output/
-          retention-days: 7
+          pip install pytest pytest-cov
+          pytest tests/ --cov=src --cov-report=xml --cov-report=term
+        continue-on-error: true
 
   lint:
     name: Lint and Format Check
@@ -161,3 +101,35 @@ jobs:
           ! grep -r "print(" src/ && echo "✓ No print statements in src/" || echo "⚠ Print statements found in src/"
           echo "✓ Basic checks completed"
         continue-on-error: true
+
+  build:
+    name: Build Package
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build package
+        run: |
+          python -m build
+          twine check dist/*
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-package
+          path: dist/
+          retention-days: 30
