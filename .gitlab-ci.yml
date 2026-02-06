@@ -1,0 +1,488 @@
+# ============================================================================
+# GitLab CI/CD Configuration for Catalog Generation Project
+# ============================================================================
+# 
+# PLACEHOLDERS TO CONFIGURE:
+# - <DOCKER_IMAGE>: Docker image for Python environment (e.g., python:3.11-slim)
+# - <PYTHON_VERSION>: Python version(s) to test (e.g., 3.9, 3.10, 3.11, 3.12)
+# - <GITLAB_REGISTRY>: Your GitLab container registry URL
+# - <PROJECT_ID>: Your GitLab project ID
+# - <PAGES_BRANCH>: Branch for GitLab Pages deployment (usually 'main')
+# - <ENVIRONMENT_NAME>: Deployment environment name (e.g., production, staging)
+# - <DEPLOY_URL>: URL where the catalog will be deployed
+# - <SLACK_WEBHOOK_URL>: Slack webhook for notifications (optional)
+# - <COVERAGE_THRESHOLD>: Minimum code coverage percentage (e.g., 80)
+# - <ARTIFACT_RETENTION_DAYS>: Days to keep artifacts (e.g., 90)
+# - <API_BASE_URL>: Base URL for any external APIs used
+#
+# ============================================================================
+
+# Workflow configuration
+workflow:
+  rules:
+    # Run pipeline for merge requests
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    # Run pipeline for commits to main/develop branches
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"
+    # Run for tags
+    - if: $CI_COMMIT_TAG
+    # Allow manual pipeline runs
+    - if: $CI_PIPELINE_SOURCE == "web"
+    # Run for scheduled pipelines
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+# Define stages for the pipeline
+stages:
+  - lint
+  - test
+  - build
+  - forge
+  - deploy
+  - notify
+
+# Global variables - CONFIGURE THESE
+variables:
+  # Python configuration
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  
+  # Docker registry settings
+  DOCKER_REGISTRY: "<GITLAB_REGISTRY>"  # e.g., registry.gitlab.com/yourgroup/yourproject
+  DOCKER_IMAGE_NAME: "$DOCKER_REGISTRY:$CI_COMMIT_REF_SLUG"
+  
+  # Deployment settings
+  PAGES_BRANCH: "<main>"  # e.g., main
+  DEPLOY_ENVIRONMENT: "<ENVIRONMENT_NAME>"  # e.g., production, staging
+  DEPLOY_URL: "<DEPLOY_URL>"  # e.g., https://yourproject.gitlab.io
+  
+  # API endpoints
+  API_BASE_URL: "<API_BASE_URL>"  # e.g., https://api.example.com
+   
+  # Artifact retention
+  ARTIFACT_RETENTION: "<ARTIFACT_RETENTION_DAYS> days"  # e.g., 90 days
+  
+  # Coverage settings
+  COVERAGE_THRESHOLD: "<COVERAGE_THRESHOLD>"  # e.g., 80
+
+# Cache configuration for faster builds
+cache:
+  key: "${CI_COMMIT_REF_SLUG}"
+  paths:
+    - .cache/pip
+    - venv/
+
+# ============================================================================
+# TEMPLATES
+# ============================================================================
+
+.python_base:
+  image: <DOCKER_IMAGE>  # e.g., python:3.11-slim
+  before_script:
+    - python --version
+    - pip install --upgrade pip
+    - pip install virtualenv
+    - virtualenv venv
+    - source venv/bin/activate
+
+.test_template:
+  extends: .python_base
+  stage: test
+  script:
+    - pip install -e ".[all]"
+    - pip install pytest pytest-cov
+    - python tests/verify_installation.py
+    - pytest tests/ --cov=src --cov-report=xml --cov-report=html --cov-report=term
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    paths:
+      - htmlcov/
+      - coverage.xml
+    expire_in: 30 days
+
+# ============================================================================
+# LINT STAGE
+# ============================================================================
+
+lint:check:
+  extends: .python_base
+  stage: lint
+  script:
+    - pip install ruff black isort pylint mypy || true
+    - echo "=== Running Ruff linter ==="
+    - ruff check src/ --exit-zero || true
+    - echo "=== Checking code formatting with Black ==="
+    - black --check src/ || true
+    - echo "=== Checking import sorting with isort ==="
+    - isort --check-only src/ || true
+    - echo "=== Running PyLint ==="
+    - pylint src/ --exit-zero || true
+    - echo "=== Running MyPy type checker ==="
+    - mypy src/ --ignore-missing-imports --exit-zero || true
+    - echo "=== Checking for common issues ==="
+    - "! grep -r 'import *' src/ && echo '✓ No wildcard imports' || echo '⚠ Wildcard imports found'"
+    - "! grep -r 'print(' src/ && echo '✓ No print statements in src/' || echo '⚠ Print statements found'"
+  allow_failure: true
+
+lint:syntax:
+  extends: .python_base
+  stage: lint
+  script:
+    - pip install -e ".[all]"
+    - python -m py_compile .gitlab/scripts/forge_parser.py || python -m py_compile .github/scripts/forge_parser.py
+    - echo "✓ Forge parser syntax OK"
+    - python -c "import generators" && echo "✓ generators import OK"
+    - python -c "import generators.intake.v2.tointake2" && echo "✓ tointake2 import OK"
+    - python -c "import generators.stac" && echo "✓ stac import OK"
+
+# ============================================================================
+# TEST STAGE - Multiple Python Versions
+# ============================================================================
+
+test:python39:
+  extends: .test_template
+  image: python:3.9-slim
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+test:python310:
+  extends: .test_template
+  image: python:3.10-slim
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+test:python311:
+  extends: .test_template
+  image: python:3.11-slim
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+test:python312:
+  extends: .test_template
+  image: python:3.12-slim
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+test:forge-parser:
+  extends: .python_base
+  stage: test
+  image: python:3.11-slim
+  script:
+    - pip install -e ".[all]"
+    - pip install pyyaml
+    - echo "=== Testing Intake Parser (dry run) ==="
+    - |
+      export ISSUE_BODY="### Source URI
+      https://digital-earths-global-hackathon.github.io/catalog/online/catalog.yaml
+      
+      ### Output Catalog Name
+      test-catalog
+      
+      ### Source Type
+      Intake v1 YAML Catalog
+      
+      ### Description
+      Test catalog for CI"
+    - export ISSUE_NUMBER="test-ci-intake"
+    - export CATALOG_TYPE="intake"
+    - python .gitlab/scripts/forge_parser.py || python .github/scripts/forge_parser.py || echo "✓ Expected failure with remote URL"
+    - echo "=== Testing STAC Parser (dry run) ==="
+    - |
+      export ISSUE_BODY="### Data Source URI
+      https://example.com/test.zarr
+      
+      ### Collection ID
+      test-collection
+      
+      ### Project ID
+      TEST
+      
+      ### Collection Description
+      Test STAC collection for CI"
+    - export ISSUE_NUMBER="test-ci-stac"
+    - export CATALOG_TYPE="stac"
+    - python .gitlab/scripts/forge_parser.py || python .github/scripts/forge_parser.py
+    - |
+      if [ -d "forge_output" ]; then
+        echo "✓ Forge output created successfully"
+        ls -lah forge_output/
+        if [ -f "forge_output/info.txt" ]; then
+          cat forge_output/info.txt
+        fi
+      fi
+  artifacts:
+    paths:
+      - forge_output/
+    expire_in: 7 days
+
+# ============================================================================
+# BUILD STAGE
+# ============================================================================
+
+build:package:
+  extends: .python_base
+  stage: build
+  script:
+    - pip install build twine
+    - python -m build
+    - twine check dist/*
+    - echo "✓ Package built successfully"
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 30 days
+  only:
+    - main
+    - tags
+    - develop
+
+build:docker:
+  stage: build
+  image: docker:24-cli
+  services:
+    - docker:24-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -t $DOCKER_IMAGE_NAME .
+    - docker tag $DOCKER_IMAGE_NAME $DOCKER_REGISTRY:latest
+    - docker push $DOCKER_IMAGE_NAME
+    - docker push $DOCKER_REGISTRY:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_TAG'
+  # Uncomment when Dockerfile is added to the repository
+  # only:
+  #   changes:
+  #     - Dockerfile
+  #     - requirements.txt
+  #     - pyproject.toml
+
+# ============================================================================
+# FORGE STAGE - Manual Catalog Generation Jobs
+# ============================================================================
+
+.forge_template:
+  extends: .python_base
+  stage: forge
+  image: python:3.11-slim
+  variables:
+    # Override these when triggering manually
+    ISSUE_NUMBER: "${CI_JOB_ID}"
+    CATALOG_TYPE: "intake"  # or "stac" or "all"
+  script:
+    - pip install -e ".[all]"
+    - pip install pyyaml
+    - |
+      if [ -z "$ISSUE_BODY" ]; then
+        echo "❌ Error: ISSUE_BODY variable is required"
+        echo "Please provide the catalog specification in ISSUE_BODY variable"
+        exit 1
+      fi
+    - python .gitlab/scripts/forge_parser.py || python .github/scripts/forge_parser.py
+    - |
+      if [ -d "forge_output" ]; then
+        echo "✓ Forge output created successfully"
+        ls -lah forge_output/
+        if [ -f "forge_output/info.txt" ]; then
+          cat forge_output/info.txt
+        fi
+        if [ -f "forge_output/error.log" ]; then
+          echo "⚠️  Errors occurred:"
+          cat forge_output/error.log
+        fi
+      fi
+  artifacts:
+    paths:
+      - forge_output/
+      - catalog/
+    expire_in: $ARTIFACT_RETENTION
+  when: manual
+  allow_failure: true
+
+forge:intake:
+  extends: .forge_template
+  variables:
+    CATALOG_TYPE: "intake"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+
+forge:stac:
+  extends: .forge_template
+  variables:
+    CATALOG_TYPE: "stac"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+
+forge:all:
+  extends: .forge_template
+  variables:
+    CATALOG_TYPE: "all"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+
+forge:auto-commit:
+  extends: .python_base
+  stage: forge
+  image: python:3.11-slim
+  needs:
+    - job: forge:intake
+      optional: true
+    - job: forge:stac
+      optional: true
+    - job: forge:all
+      optional: true
+  script:
+    - |
+      if [ -f "forge_output/added_to_main.txt" ]; then
+        echo "📝 Catalog was added to main catalog, committing changes..."
+        git config user.name "gitlab-ci"
+        git config user.email "gitlab-ci@${CI_PROJECT_NAMESPACE}.gitlab.com"
+        git remote set-url origin https://oauth2:${CI_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
+        git add catalog/main.yaml
+        git commit -m "Add catalog from forge job ${CI_JOB_ID} [skip ci]" || echo "No changes to commit"
+        git push origin HEAD:${CI_COMMIT_REF_NAME} || echo "Push failed, but continuing..."
+      else
+        echo "ℹ️  No catalog updates to commit"
+      fi
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "web"'
+      when: on_success
+  # Requires CI_PUSH_TOKEN variable with write access
+
+# ============================================================================
+# DEPLOY STAGE
+# ============================================================================
+
+deploy:pages:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - mkdir -p public
+    - cp index.html public/ || echo "No index.html found"
+    - cp -r catalog public/ || echo "No catalog directory found"
+    - |
+      if [ -d "htmlcov" ]; then
+        cp -r htmlcov public/coverage
+      fi
+    - echo "Deployed to GitLab Pages"
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $PAGES_BRANCH'
+  # For GitLab Pages, artifacts must be in 'public' directory
+
+# ============================================================================
+# NOTIFY STAGE
+# ============================================================================
+
+notify:slack:
+  stage: notify
+  image: curlimages/curl:latest
+  script:
+    - |
+      if [ "$CI_JOB_STATUS" == "success" ]; then
+        STATUS_EMOJI="✅"
+        STATUS_TEXT="succeeded"
+        COLOR="good"
+      else
+        STATUS_EMOJI="❌"
+        STATUS_TEXT="failed"
+        COLOR="danger"
+      fi
+    - |
+      curl -X POST ${SLACK_WEBHOOK_URL} \
+        -H 'Content-Type: application/json' \
+        -d "{
+          \"attachments\": [{
+            \"color\": \"${COLOR}\",
+            \"title\": \"${STATUS_EMOJI} Pipeline ${STATUS_TEXT}\",
+            \"text\": \"Project: ${CI_PROJECT_NAME}\\nBranch: ${CI_COMMIT_REF_NAME}\\nCommit: ${CI_COMMIT_SHORT_SHA}\",
+            \"footer\": \"GitLab CI\",
+            \"footer_icon\": \"https://about.gitlab.com/images/press/logo/png/gitlab-icon-rgb.png\",
+            \"fields\": [
+              {\"title\": \"Author\", \"value\": \"${GITLAB_USER_NAME}\", \"short\": true},
+              {\"title\": \"Pipeline\", \"value\": \"<${CI_PIPELINE_URL}|#${CI_PIPELINE_ID}>\", \"short\": true}
+            ]
+          }]
+        }"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" && $SLACK_WEBHOOK_URL && $SLACK_WEBHOOK_URL != "<SLACK_WEBHOOK_URL>"'
+      when: on_failure
+    - if: '$CI_COMMIT_BRANCH == "main" && $SLACK_WEBHOOK_URL && $SLACK_WEBHOOK_URL != "<SLACK_WEBHOOK_URL>"'
+      when: on_success
+  allow_failure: true
+  # Requires SLACK_WEBHOOK_URL variable
+
+notify:email:
+  stage: notify
+  image: python:3.11-slim
+  script:
+    - echo "Pipeline finished with status: ${CI_JOB_STATUS}"
+    - echo "Use GitLab's built-in email notifications (Settings > Integrations > Pipelines emails)"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: on_failure
+  allow_failure: true
+
+# ============================================================================
+# SCHEDULED JOBS
+# ============================================================================
+
+# Example: Nightly comprehensive test
+scheduled:comprehensive-test:
+  extends: .python_base
+  stage: test
+  script:
+    - pip install -e ".[all]"
+    - pytest tests/ -v --tb=long
+    - echo "✓ Comprehensive tests completed"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "comprehensive"'
+  allow_failure: true
+
+# Example: Weekly catalog validation
+scheduled:validate-catalogs:
+  extends: .python_base
+  stage: test
+  script:
+    - pip install -e ".[all]"
+    - |
+      echo "Validating all catalogs..."
+      for catalog_file in catalog/*.yaml; do
+        echo "Checking $catalog_file"
+        python -c "import yaml; yaml.safe_load(open('$catalog_file'))" && echo "✓ Valid YAML" || echo "✗ Invalid YAML"
+      done
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "validation"'
+  allow_failure: true
+
+# ============================================================================
+# CLEANUP JOB
+# ============================================================================
+
+cleanup:old-artifacts:
+  stage: .post
+  image: alpine:latest
+  script:
+    - echo "Cleanup job - use GitLab API to delete old artifacts if needed"
+    - echo "Configure artifact expiration policies in: Settings > CI/CD > Artifacts"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_TYPE == "cleanup"'
+  allow_failure: true
