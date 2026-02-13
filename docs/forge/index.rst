@@ -1,10 +1,11 @@
-.. Automated Catalog Generation
+.. Automated Generation
 
 ============================
-Automated Catalog Generation
+Automated Generation
 ============================
 
-The Forge system provides automated catalog generation through GitHub Issues and GitLab CI/CD integration.
+The project includes a so called *"Forge system"* which allows users to trigger automatic
+catalog generation through GitHub Issues and GitLab Continous Integration (CI/CD) integration.
 
 Overview
 --------
@@ -24,11 +25,8 @@ Start with the :doc:`FORGE_QUICKSTART` guide for a quick introduction, or read t
 :doc:`FORGE` documentation for detailed information.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :caption: Forge Documentation
 
-   FORGE
-   FORGE_QUICKSTART
-   FORGE_ARCHITECTURE
-   FORGE_EXAMPLES
-   FORGE_CHECKLIST
+    user/index
+    server/index

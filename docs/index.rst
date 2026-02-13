@@ -33,9 +33,8 @@ Indices and tables
 * :ref:`search`
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :caption: Contents:
 
-   COMMUNITY_CATALOG
    forge/index
-   ci/index
+   catalog/index
