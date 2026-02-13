@@ -36,5 +36,5 @@ Indices and tables
    :maxdepth: 4
    :caption: Contents:
 
-    forge/index
-    catalog/index
+   forge/index
+   catalog/index
