@@ -64,9 +64,26 @@ dev = [
     "pytest-cov",
 ]
 
+# Documentation dependencies
+docs = [
+    "sphinx>=7.0",
+    "furo",
+    "myst-parser",
+    "sphinx-autodoc-typehints",
+]
+
 [project.urls]
 Homepage = "https://github.com/yourusername/2catalogs"
 Repository = "https://github.com/yourusername/2catalogs"
+
+# UV dependency groups (for uv sync --group)
+[dependency-groups]
+docs = [
+    "sphinx>=7.0",
+    "furo",
+    "myst-parser",
+    "sphinx-autodoc-typehints",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
