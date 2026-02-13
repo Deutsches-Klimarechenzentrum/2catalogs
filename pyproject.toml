@@ -67,7 +67,7 @@ dev = [
 # Documentation dependencies
 docs = [
     "sphinx>=7.0",
-    "furo",
+    "sphinx-book-theme",
     "myst-parser",
     "sphinx-autodoc-typehints",
 ]
@@ -80,7 +80,7 @@ Repository = "https://github.com/yourusername/2catalogs"
 [dependency-groups]
 docs = [
     "sphinx>=7.0",
-    "furo",
+    "sphinx-book-theme",
     "myst-parser",
     "sphinx-autodoc-typehints",
 ]

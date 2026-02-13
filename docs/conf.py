@@ -34,7 +34,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'furo'  # Modern, clean theme
+html_theme = 'sphinx_book_theme'  # Modern, clean theme
 html_static_path = ['_static']
 html_title = '2catalogs Documentation'
 
@@ -42,7 +42,18 @@ html_title = '2catalogs Documentation'
 html_theme_options = {
     "sidebar_hide_name": False,
     "navigation_with_keys": True,
+    "show_toc_level": 2,
+    "repository_url": "https://github.com/Deutsches-Klimarechenzentrum/2catalogs/",
+    "use_repository_button": True,
+    "extra_footer": '''
+        <div style="text-align: center;">
+            <a href="https://www.dkrz.de/en/about-en/contact/impressum" target="_blank">Imprint</a> and
+            <a href="https://www.dkrz.de/en/about-en/contact/en-datenschutzhinweise" target="_blank">Privacy Policy</a>
+        </div>
+    ''',
 }
+
+html_logo = '_static/dkrz_logo.png'
 
 # -- Extension configuration -------------------------------------------------
 
