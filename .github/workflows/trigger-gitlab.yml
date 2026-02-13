@@ -3,8 +3,11 @@ name: Trigger GitLab CI for Forge
 # ============================================================================
 # GitHub Workflow to Trigger GitLab CI
 # ============================================================================
-# This workflow triggers GitLab CI/CD pipeline when issues are created with
-# forge labels. The actual catalog generation runs on GitLab runners.
+# This workflow triggers GitLab CI/CD pipeline when issues are opened with
+# forge templates. The actual catalog generation runs on GitLab runners.
+#
+# Detection: Uses issue title prefixes ([Forge-Intake], [Forge-STAC], [Forge-All])
+# to determine catalog type, since labels may not be applied immediately.
 #
 # Prerequisites:
 # - GITLAB_TRIGGER_TOKEN: GitLab pipeline trigger token (set in GitHub secrets)
@@ -13,7 +16,7 @@ name: Trigger GitLab CI for Forge
 
 on:
   issues:
-    types: [opened, labeled]
+    types: [opened]
 
 permissions:
   issues: write
@@ -25,61 +28,75 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Check for forge labels
-        id: check-labels
+      - name: Check for forge issue
+        id: check-forge
         run: |
-          LABELS='${{ toJSON(github.event.issue.labels.*.name) }}'
-          echo "Labels found: $LABELS"
+          ISSUE_TITLE='${{ github.event.issue.title }}'
+          echo "Issue title: $ISSUE_TITLE"
           
-          if echo "$LABELS" | grep -qE '"forge-(intake|stac|all)"'; then
-            echo "has_forge_label=true" >> $GITHUB_OUTPUT
-            echo "✓ Issue has forge label"
+          # Check if the issue title contains a forge prefix
+          if [[ "$ISSUE_TITLE" =~ \[Forge-(Intake|STAC|All)\] ]]; then
+            echo "is_forge_issue=true" >> $GITHUB_OUTPUT
+            echo "✓ Forge issue detected from title"
           else
-            echo "has_forge_label=false" >> $GITHUB_OUTPUT
-            echo "✗ Issue does not have forge label"
+            echo "is_forge_issue=false" >> $GITHUB_OUTPUT
+            echo "✗ Not a forge issue"
           fi
-      
-      - name: Comment on missing labels
-        if: steps.check-labels.outputs.has_forge_label == 'false'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const comment = `ℹ️ **No forge label detected**\n\n` +
-              `To trigger catalog generation, please add one of these labels:\n` +
-              `- \`forge-intake\` - Generate Intake catalog\n` +
-              `- \`forge-stac\` - Generate STAC catalog\n` +
-              `- \`forge-all\` - Generate both catalogs\n\n` +
-              `The GitLab CI pipeline will be triggered automatically once a forge label is added.`;
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
       
       - name: Determine catalog type
         id: catalog-type
-        if: steps.check-labels.outputs.has_forge_label == 'true'
+        if: steps.check-forge.outputs.is_forge_issue == 'true'
         run: |
-          LABELS='${{ toJSON(github.event.issue.labels.*.name) }}'
+          ISSUE_TITLE='${{ github.event.issue.title }}'
+          echo "Analyzing title: $ISSUE_TITLE"
           
-          if echo "$LABELS" | grep -q "forge-all"; then
+          # Determine catalog type from issue title prefix
+          if [[ "$ISSUE_TITLE" =~ \[Forge-All\] ]]; then
             echo "type=all" >> $GITHUB_OUTPUT
             echo "job=forge:all" >> $GITHUB_OUTPUT
-          elif echo "$LABELS" | grep -q "forge-stac"; then
+            echo "✓ Catalog type: all (both intake and stac)"
+          elif [[ "$ISSUE_TITLE" =~ \[Forge-STAC\] ]]; then
             echo "type=stac" >> $GITHUB_OUTPUT
             echo "job=forge:stac" >> $GITHUB_OUTPUT
-          elif echo "$LABELS" | grep -q "forge-intake"; then
+            echo "✓ Catalog type: stac"
+          elif [[ "$ISSUE_TITLE" =~ \[Forge-Intake\] ]]; then
             echo "type=intake" >> $GITHUB_OUTPUT
             echo "job=forge:intake" >> $GITHUB_OUTPUT
+            echo "✓ Catalog type: intake"
           else
             echo "type=unknown" >> $GITHUB_OUTPUT
             echo "job=unknown" >> $GITHUB_OUTPUT
+            echo "✗ Could not determine catalog type from title"
           fi
 
+      - name: Label issue
+        if: steps.check-forge.outputs.is_forge_issue == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const catalogType = '${{ steps.catalog-type.outputs.type }}';
+            const labels = [];
+            
+            if (catalogType === 'all') {
+              labels.push('forge-all', 'forge-intake', 'forge-stac');
+            } else if (catalogType === 'intake') {
+              labels.push('forge-intake');
+            } else if (catalogType === 'stac') {
+              labels.push('forge-stac');
+            }
+            
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: labels
+              });
+              console.log(`✓ Added labels: ${labels.join(', ')}`);
+            }
+
       - name: Comment workflow started
-        if: steps.check-labels.outputs.has_forge_label == 'true'
+        if: steps.check-forge.outputs.is_forge_issue == 'true'
         uses: actions/github-script@v7
         with:
           script: |
@@ -98,7 +115,7 @@ jobs:
             });
 
       - name: Trigger GitLab CI Pipeline
-        if: steps.check-labels.outputs.has_forge_label == 'true'
+        if: steps.check-forge.outputs.is_forge_issue == 'true'
         env:
           GITLAB_TRIGGER_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
           GITLAB_PROJECT_ID: ${{ secrets.GITLAB_PROJECT_ID }}
@@ -144,7 +161,7 @@ jobs:
 
       - name: Comment pipeline link
         uses: actions/github-script@v7
-        if: success() && steps.check-labels.outputs.has_forge_label == 'true'
+        if: success() && steps.check-forge.outputs.is_forge_issue == 'true'
         with:
           script: |
             const pipelineUrl = '${{ steps.trigger.outputs.pipeline_url }}';
@@ -163,7 +180,7 @@ jobs:
 
       - name: Comment on failure
         uses: actions/github-script@v7
-        if: failure() && steps.check-labels.outputs.has_forge_label == 'true'
+        if: failure() && steps.check-forge.outputs.is_forge_issue == 'true'
         with:
           script: |
             const comment = `❌ **Failed to trigger GitLab pipeline**\n\n` +
