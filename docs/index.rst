@@ -7,7 +7,6 @@ Welcome to 2catalogs Documentation
    :maxdepth: 2
    :caption: Contents:
 
-   README
    COMMUNITY_CATALOG
    forge/index
    ci/index

@@ -17,10 +17,6 @@ docs/
     ├── CI_ARCHITECTURE.md      # Pipeline architecture
     ├── CI_SPLIT_GUIDE.md       # CI/CD split guide
     ├── CI_SPLIT_SUMMARY.md     # Implementation summary
-    │
-    └── gitlab/                 # GitLab-specific docs
-        ├── README.md           # GitLab setup guide
-        └── UV_MIGRATION_GUIDE.md  # UV migration guide
 ```
 
 ## 🚀 Deployment
@@ -34,11 +30,7 @@ When you push to the `main` branch, the GitLab CI pipeline:
 
 ## 🌐 URLs
 
-After deployment, content is available at:
-
-- **Main page**: `https://your-namespace.gitlab-pages.dkrz.de/-/2catalogs/`
-- **Documentation**: `https://your-namespace.gitlab-pages.dkrz.de/-/2catalogs/documentation.html`
-- **Specific docs**: Use URL hash like `documentation.html#forge-forge-md`
+After deployment, content is available at: `https://2catalogs-bcb301.gitlab-pages.dkrz.de`
 
 ## ✏️ Editing
 
