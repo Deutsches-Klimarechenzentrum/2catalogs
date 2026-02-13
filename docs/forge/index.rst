@@ -13,7 +13,6 @@ The Forge system provides automated catalog generation through GitHub Issues and
    FORGE
    FORGE_QUICKSTART
    FORGE_ARCHITECTURE
-   FORGE_SUMMARY
    FORGE_EXAMPLES
    FORGE_CHECKLIST
 

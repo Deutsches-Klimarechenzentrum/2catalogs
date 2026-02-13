@@ -40,18 +40,24 @@ html_title = '2catalogs Documentation'
 
 # Theme options
 html_theme_options = {
-    "sidebar_hide_name": False,
-    "navigation_with_keys": True,
     "show_toc_level": 2,
     "repository_url": "https://github.com/Deutsches-Klimarechenzentrum/2catalogs/",
     "use_repository_button": True,
-    "extra_footer": '''
-        <div style="text-align: center;">
-            <a href="https://www.dkrz.de/en/about-en/contact/impressum" target="_blank">Imprint</a> and
-            <a href="https://www.dkrz.de/en/about-en/contact/en-datenschutzhinweise" target="_blank">Privacy Policy</a>
-        </div>
-    ''',
+    "home_page_in_toc": True,
 }
+
+# Custom footer
+html_context = {
+    "default_mode": "light"
+}
+
+# Add custom footer via template
+html_theme_options["extra_footer"] = '''
+<div style="text-align: center; margin-top: 2em;">
+    <a href="https://www.dkrz.de/en/about-en/contact/impressum" target="_blank">Imprint</a> | 
+    <a href="https://www.dkrz.de/en/about-en/contact/en-datenschutzhinweise" target="_blank">Privacy Policy</a>
+</div>
+'''
 
 html_logo = '_static/dkrz_logo.png'
 

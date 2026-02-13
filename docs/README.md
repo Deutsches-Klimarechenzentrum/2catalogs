@@ -38,7 +38,7 @@ After deployment, content is available at:
 
 - **Main page**: `https://your-namespace.gitlab-pages.dkrz.de/-/2catalogs/`
 - **Documentation**: `https://your-namespace.gitlab-pages.dkrz.de/-/2catalogs/documentation.html`
-- **Specific docs**: Use URL hash like `documentation.html#docs/FORGE.md`
+- **Specific docs**: Use URL hash like `documentation.html#forge-forge-md`
 
 ## ✏️ Editing
 

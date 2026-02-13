@@ -10,7 +10,6 @@ Welcome to 2catalogs Documentation
    README
    COMMUNITY_CATALOG
    forge/index
-   MERGE_REQUEST_WORKFLOW
    ci/index
 
 Overview
@@ -39,9 +38,9 @@ Documentation Sections
 Quick Links
 -----------
 
-* `GitHub Repository <https://github.com/yourusername/2catalogs>`_
-* `GitLab CI/CD <https://gitlab.com/yourusername/2catalogs>`_
-* `Issue Templates <https://github.com/yourusername/2catalogs/issues/new/choose>`_
+* `GitHub Repository <https://github.com/Deutsches-Klimarechenzentrum/2catalogs/>`_
+* `GitLab CI/CD <https://gitlab.dkrz.de/data-infrastructure-services/2catalogs>`_
+* `Issue Templates <https://github.com/Deutsches-Klimarechenzentrum/2catalogs/issues/new/choose>`_
 
 Indices and tables
 ==================

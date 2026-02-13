@@ -135,5 +135,5 @@ All processing happens in your browser - no server-side code needed!
 ## 🙋 Questions?
 
 - Check existing catalogs on the [web interface](https://yourusername.github.io/2catalogs)
-- Review [forge documentation](docs/FORGE.md)
+- Review [forge documentation](forge/FORGE.md)
 - Open a discussion or issue on GitHub

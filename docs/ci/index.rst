@@ -8,9 +8,7 @@ CI/CD Documentation
 
    CI_ARCHITECTURE
    CI_SPLIT_GUIDE
-   CI_SPLIT_SUMMARY
-   gitlab/README
-   gitlab/UV_MIGRATION_GUIDE
+   MERGE_REQUEST_WORKFLOW
 
 Overview
 --------
