@@ -6,16 +6,6 @@ Forge System
 
 The Forge system provides automated catalog generation through GitHub Issues and GitLab CI/CD integration.
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Forge Documentation
-
-   FORGE
-   FORGE_QUICKSTART
-   FORGE_ARCHITECTURE
-   FORGE_EXAMPLES
-   FORGE_CHECKLIST
-
 Overview
 --------
 
@@ -33,12 +23,12 @@ Getting Started
 Start with the :doc:`FORGE_QUICKSTART` guide for a quick introduction, or read the complete
 :doc:`FORGE` documentation for detailed information.
 
-Documentation Sections
-----------------------
+.. toctree::
+   :maxdepth: 2
+   :caption: Forge Documentation
 
-* :doc:`FORGE` - Complete Forge system documentation
-* :doc:`FORGE_QUICKSTART` - Quick start guide to get up and running
-* :doc:`FORGE_ARCHITECTURE` - Technical architecture and implementation details
-* :doc:`FORGE_SUMMARY` - High-level summary of the Forge system
-* :doc:`FORGE_EXAMPLES` - Real-world examples and use cases
-* :doc:`FORGE_CHECKLIST` - Setup and maintenance checklist
+   FORGE
+   FORGE_QUICKSTART
+   FORGE_ARCHITECTURE
+   FORGE_EXAMPLES
+   FORGE_CHECKLIST

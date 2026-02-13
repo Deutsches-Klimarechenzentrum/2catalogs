@@ -20,6 +20,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
     'myst_parser',  # For Markdown support
+    'sphinxcontrib.mermaid',  # For Mermaid diagrams
 ]
 
 # Markdown files support
@@ -80,3 +81,6 @@ myst_enable_extensions = [
     "deflist",
     "fieldlist",
 ]
+
+# Enable Mermaid diagrams in MyST
+myst_fence_as_directive = ["mermaid"]

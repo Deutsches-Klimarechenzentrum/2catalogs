@@ -70,6 +70,7 @@ docs = [
     "sphinx-book-theme",
     "myst-parser",
     "sphinx-autodoc-typehints",
+    "sphinxcontrib-mermaid",
 ]
 
 [project.urls]
@@ -83,6 +84,7 @@ docs = [
     "sphinx-book-theme",
     "myst-parser",
     "sphinx-autodoc-typehints",
+    "sphinxcontrib-mermaid",
 ]
 
 [tool.setuptools]

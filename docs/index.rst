@@ -3,14 +3,6 @@
 Welcome to 2catalogs Documentation
 ===================================
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-   COMMUNITY_CATALOG
-   forge/index
-   ci/index
-
 Overview
 --------
 
@@ -26,14 +18,6 @@ Features
 * Automated CI/CD pipeline integration
 * Community catalog management
 
-Documentation Sections
-----------------------
-
-* :doc:`README` - Project overview and getting started
-* :doc:`forge/index` - Complete Forge system documentation
-* :doc:`COMMUNITY_CATALOG` - Community catalog information
-* :doc:`ci/index` - CI/CD architecture and guides
-
 Quick Links
 -----------
 
@@ -47,3 +31,11 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+   COMMUNITY_CATALOG
+   forge/index
+   ci/index
