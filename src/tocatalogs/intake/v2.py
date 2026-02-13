@@ -318,7 +318,7 @@ def handle_intake1_yaml(
     global_md = catalog_v1.get("metadata")
     pms = {}
     if global_md:
-        pms = global_md.get("parameters")  
+        pms = global_md.get("parameters", {})  
         
     for pm_name,pm_dict in pms.items():
         if not pm_dict["type"] == "str":

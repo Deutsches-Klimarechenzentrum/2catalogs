@@ -27,34 +27,31 @@ classifiers = [
 dependencies = [
     "fsspec",
     "pyyaml",
+    "requests",
+    "aiohttp",
+    "xarray",
+    "pandas"
 ]
 
 [project.optional-dependencies]
 # Intake-related dependencies
 intake = [
     "intake>=2.0.0",
-    "tqdm",
-    "pandas",
+    "tqdm"
 ]
 
 # STAC-related dependencies
 stac = [
     "pystac",
-    "pystac-client",
-    "xarray",
-    "pandas",
-    "requests",
+    "pystac-client"
 ]
 
 # All optional dependencies
 all = [
     "intake>=2.0.0",
     "tqdm",
-    "pandas",
     "pystac",
     "pystac-client",
-    "xarray",
-    "requests",
 ]
 
 # Development dependencies
