@@ -44,10 +44,7 @@ variables:
   
   # Deployment settings
   PAGES_BRANCH: "main"
-  
-  # Artifact retention
-  ARTIFACT_RETENTION: "5 days"
-  
+    
   # Debian
   DEBIAN_FRONTEND: noninteractive
   
@@ -129,7 +126,7 @@ uv:setup:
     paths:
       - forge_output/
       - catalog/
-    expire_in: $ARTIFACT_RETENTION
+    expire_in: 5 days
   when: manual
   allow_failure: true
 
