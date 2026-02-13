@@ -6,13 +6,6 @@ CI/CD Architecture Overview
 
 The CI/CD workload is split between GitLab CI and GitHub Actions to optimize resources and leverage each platform's strengths.
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Platform Details
-
-   CI_GITLAB
-   CI_GITHUB
-
 Architecture
 ============
 
@@ -141,3 +134,10 @@ Best Practices
 - ❌ Run forge on GitHub (disabled)
 - ❌ Duplicate tests across platforms
 - ❌ Mix responsibilities
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Platform Details
+
+    CI_GITLAB
+    CI_GITHUB

@@ -11,4 +11,5 @@ Overview
    :maxdepth: 2
    :caption: Forge Documentation
 
-   CATALOG
+    COMMUNITY_CATALOG
+    MONITOR
