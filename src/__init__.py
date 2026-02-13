@@ -14,8 +14,8 @@ def __getattr__(name):
     """Lazy import for optional dependencies."""
     if name == "intake":
         try:
-            from . import tocatalogs
-            return tocatalogs
+            import importlib
+            return importlib.import_module('.tocatalogs', __name__)
         except ImportError as e:
             raise ImportError(
                 f"The 'intake' functionality requires additional dependencies. "
@@ -24,8 +24,8 @@ def __getattr__(name):
             ) from e
     elif name == "stac":
         try:
-            from . import tocatalogs
-            return tocatalogs
+            import importlib
+            return importlib.import_module('.tocatalogs', __name__)
         except ImportError as e:
             raise ImportError(
                 f"The 'stac' functionality requires additional dependencies. "

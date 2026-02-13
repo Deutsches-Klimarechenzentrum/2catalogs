@@ -7,8 +7,8 @@ def __getattr__(name):
     """Lazy import for intake modules."""
     if name == "v2":
         try:
-            from . import v2 as _v2
-            return _v2
+            import importlib
+            return importlib.import_module('.v2', __name__)
         except ImportError as e:
             raise ImportError(
                 f"The intake generator requires additional dependencies. "

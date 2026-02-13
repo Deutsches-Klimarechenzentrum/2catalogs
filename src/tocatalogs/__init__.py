@@ -7,8 +7,8 @@ def __getattr__(name):
     """Lazy import for optional generator modules."""
     if name == "intake":
         try:
-            from . import intake as _intake
-            return _intake
+            import importlib
+            return importlib.import_module('.intake', __name__)
         except ImportError as e:
             raise ImportError(
                 f"The 'intake' generator requires additional dependencies. "
@@ -17,8 +17,8 @@ def __getattr__(name):
             ) from e
     elif name == "stac":
         try:
-            from . import stac as _stac
-            return _stac
+            import importlib
+            return importlib.import_module('.stac', __name__)
         except ImportError as e:
             raise ImportError(
                 f"The 'stac' generator requires additional dependencies. "
