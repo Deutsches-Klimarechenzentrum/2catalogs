@@ -140,8 +140,6 @@ jobs:
             -F "variables[FORGE_JOB]=${{ steps.catalog-type.outputs.job }}" \
             -F "variables[GITHUB_TOKEN]=${{ secrets.GITHUB_TOKEN }}" \
             -F "variables[GITHUB_REPOSITORY]=${{ github.repository }}")
-            -F "variables[GITHUB_TOKEN]=${{ secrets.GITHUB_TOKEN }}" \
-            -F "variables[GITHUB_REPOSITORY]=${{ github.repository }}")
           
           echo "GitLab API Response:"
           echo "$RESPONSE" | jq '.'
