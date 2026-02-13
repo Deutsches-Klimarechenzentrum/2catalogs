@@ -1,4 +1,4 @@
-# CI/CD Split: GitLab and GitHub
+# GitLab and GitHub
 
 ## Overview
 

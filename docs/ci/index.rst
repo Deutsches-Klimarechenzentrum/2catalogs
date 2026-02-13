@@ -1,7 +1,7 @@
-.. CI/CD Documentation
+.. Continous Integration (CI)
 
-CI/CD Documentation
-===================
+Continous Integration (CI)
+==========================
 
 Overview
 --------

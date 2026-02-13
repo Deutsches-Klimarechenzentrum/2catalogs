@@ -16,8 +16,7 @@ HOSTURLS={
     'MPI-M':None
 }
 ID_TEMPLATE="project_id-source_id-experiment_id-version_id-realm-grid_label-level_type-frequency-cell_methods"
-GRIDLOOK = "https://swift.dkrz.de/v1/dkrz_7fa6baba-db43-4d12-a295-8e3ebb1a01ed/apps/gridlook/index.html"
-GRIDLOOK_HP = "https://gridlook.pages.dev/"
+GRIDLOOK = "https://gridlook.pages.dev/"
 ALTERNATE_KERCHUNK = dict(
     processed={
         "name": "Processed",
@@ -129,6 +128,7 @@ def get_bbox(
     latmax:float=90.
 ) -> list:
     if all(a in ds.variables for a in ["lon","lat"]):
+        ds=ds.reset_coords()[["lon","lat"]]
         try:
             lonmin=ds["lon"].min().values[()]
             latmin=ds["lat"].min().values[()]
@@ -186,7 +186,7 @@ def get_geometry(
         ]]
     }
 
-def get_time_min_max(ds:xr.Dataset) -> (str,str):
+def get_time_min_max(ds:xr.Dataset) -> tuple[str, str]:
     time_min = time_max = None
     if "time" in ds.variables:
         time_min=str(ds["time"].min().values[()]).split('.')[0]+'Z'
@@ -425,12 +425,9 @@ def xarray_dataset_to_stac_item(
     )
     href=ds.encoding.get("source",ds.attrs.get("href"))    
     if l_gridlook:
-        gridlook_url=GRIDLOOK_HP
-        #if any(a in item_id for a in ["healpix","orcestra","nextgems"]):
-        #    gridlook_url=GRIDLOOK_HP
-        gridlook_href=gridlook_url+"#"+stac_href
+        gridlook_href=GRIDLOOK+"#"+stac_href
         if L_API and href:
-            gridlook_href=gridlook_url+"#"+href        
+            gridlook_href=GRIDLOOK+"#"+href        
         item.add_asset(
             "gridlook",
             Asset(
@@ -702,7 +699,7 @@ def xarray_zarr_datasets_to_stac_item(
                 description="Web-assembly based analysis platform with access to this item"
             )
         ) 
-        gridlook_href=GRIDLOOK_HP+"#"
+        gridlook_href=GRIDLOOK+"#"
         if "eerie-cloud" in dscloud.encoding["source"]:
             gridlook_href+="/".join(dscloud.encoding["source"].split('/')[:-1]+["stac"])
         else:

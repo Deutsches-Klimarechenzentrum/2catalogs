@@ -1,8 +1,8 @@
-.. Forge documentation
+.. Automated Catalog Generation
 
-=====================
-Forge System
-=====================
+============================
+Automated Catalog Generation
+============================
 
 The Forge system provides automated catalog generation through GitHub Issues and GitLab CI/CD integration.
 

@@ -1,4 +1,4 @@
-# CI/CD Architecture - GitLab & GitHub Split
+# Architecture - GitLab & GitHub Split
 
 ## Visual Overview
 

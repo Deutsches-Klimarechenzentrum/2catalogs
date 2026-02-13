@@ -1,4 +1,4 @@
-# Catalog Forge - Automated Catalog Generation
+# Forge System
 
 The 2catalogs project includes a "forge" mechanism that automatically generates catalogs through GitHub Issues. This allows users to request catalog generation without needing to install or run the tools locally.
 
