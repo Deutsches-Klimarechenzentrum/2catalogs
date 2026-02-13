@@ -3,7 +3,6 @@ import fsspec
 import json
 from .api_interaction import *
 from .defaults import *
-import pystac
 import math
 import itertools
 
@@ -198,8 +197,6 @@ def get_providers(template_item:dict) -> dict:
                     todel.append(i)
                     providers[i]["name"]="N/A"
                     providers[i]["description"]="N/A"
-            if providers[i]["name"]=="252":
-                print("name ",entry_id)
         for d in todel:
             del providers[i]
     return providers

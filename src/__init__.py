@@ -7,15 +7,15 @@ The 'intake' and 'stac' modules are optional and can be installed separately.
 
 __version__ = "0.1.0"
 
-__all__ = ["generators"]
+__all__ = ["tocatalogs"]
 
 
 def __getattr__(name):
     """Lazy import for optional dependencies."""
     if name == "intake":
         try:
-            from . import generators
-            return generators
+            from . import tocatalogs
+            return tocatalogs
         except ImportError as e:
             raise ImportError(
                 f"The 'intake' functionality requires additional dependencies. "
@@ -24,8 +24,8 @@ def __getattr__(name):
             ) from e
     elif name == "stac":
         try:
-            from . import generators
-            return generators
+            from . import tocatalogs
+            return tocatalogs
         except ImportError as e:
             raise ImportError(
                 f"The 'stac' functionality requires additional dependencies. "

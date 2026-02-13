@@ -14,9 +14,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
-# Import intake and tointake2 functions
+# Import intake and v2 functions
 import intake
-from generators.intake.v2.tointake2 import convert_to_intake2, setup_logging as setup_tointake2_logging
+from tocatalogs.intake.v2 import convert_to_intake2, setup_logging as setup_tointake2_logging
 
 
 def parse_issue_body(body: str) -> Dict[str, str]:
@@ -296,8 +296,8 @@ def run_stac_forge(fields: Dict[str, str], output_dir: Path) -> int:
 
 def main():
     """Main entry point."""
-    # Setup logging for tointake2
-    setup_tointake2_logging(logging.INFO)
+    # Setup logging for intake v2
+    setup_intake_v2_logging(logging.INFO)
     
     # Get environment variables
     issue_body = os.environ.get('ISSUE_BODY', '')

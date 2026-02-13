@@ -87,10 +87,10 @@ The package uses lazy imports for optional dependencies. This means you can inst
 
 ```python
 # Only works if installed with [intake]
-from generators.intake.v2 import tointake2
+from tocatalogs.intake import v2
 
 # Only works if installed with [stac]
-from generators.stac import create_collection
+from tocatalogs.stac import create_collection
 ```
 
 If you try to use a module without its dependencies installed, you'll get a helpful error message:
@@ -128,10 +128,10 @@ Don't want to install anything? Use the **Catalog Forge** to generate catalogs a
 ```
 2catalogs/
 ├── src/
-│   ├── generators/
+│   ├── tocatalogs/
 │   │   ├── intake/       # Intake catalog generators
 │   │   │   └── v2/
-│   │   │       └── tointake2.py
+│   │   │       └── v2.py
 │   │   └── stac/         # STAC catalog generators
 │   │       ├── create_collection.py
 │   │       ├── create_with_eeriecloud.py

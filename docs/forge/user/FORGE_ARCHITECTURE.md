@@ -124,11 +124,11 @@ main()
 
 #### Intake Generator
 
-**Module:** `generators.intake.v2.tointake2`
+**Module:** `tocatalogs.intake.v2`
 
 **Execution:** Called as subprocess
 ```bash
-python -m generators.intake.v2.tointake2 <source_uri> --out <output>
+python -m tocatalogs.intake.v2 <source_uri> --out <output>
 ```
 
 **Supported Inputs:**
@@ -139,7 +139,7 @@ python -m generators.intake.v2.tointake2 <source_uri> --out <output>
 
 #### STAC Generator
 
-**Module:** `generators.stac`
+**Module:** `tocatalogs.stac`
 
 **Current Implementation:** Placeholder (generates basic collection)
 
@@ -306,7 +306,7 @@ When configured, the forge integrates with GitLab CI to automatically create mer
 
 4. **Create Generator** (if needed)
    ```python
-   # src/generators/newtype/generator.py
+   # src/tocatalogs/newtype/generator.py
    ```
 
 5. **Add Tests**

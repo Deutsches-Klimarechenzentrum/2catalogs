@@ -15,17 +15,17 @@ def __getattr__(name):
         try:
             # Import the module and return it from sys.modules to avoid recursion
             if name == "create_collection":
-                import generators.stac.create_collection
-                return sys.modules['generators.stac.create_collection']
+                import tocatalogs.stac.create_collection
+                return sys.modules['tocatalogs.stac.create_collection']
             elif name == "create_with_eeriecloud":
-                import generators.stac.create_with_eeriecloud
-                return sys.modules['generators.stac.create_with_eeriecloud']
+                import tocatalogs.stac.create_with_eeriecloud
+                return sys.modules['tocatalogs.stac.create_with_eeriecloud']
             elif name == "xarray_dataset_to_stac_item":
-                import generators.stac.xarray_dataset_to_stac_item
-                return sys.modules['generators.stac.xarray_dataset_to_stac_item']
+                import tocatalogs.stac.xarray_dataset_to_stac_item
+                return sys.modules['tocatalogs.stac.xarray_dataset_to_stac_item']
             elif name == "utils":
-                import generators.stac.utils
-                return sys.modules['generators.stac.utils']
+                import tocatalogs.stac.utils
+                return sys.modules['tocatalogs.stac.utils']
         except ImportError as e:
             raise ImportError(
                 f"The STAC generator requires additional dependencies. "

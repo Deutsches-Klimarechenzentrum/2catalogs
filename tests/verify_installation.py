@@ -9,7 +9,7 @@ optional dependencies work as expected.
 def test_core_import():
     """Test core package import."""
     try:
-        import generators
+        import tocatalogs
         print("✓ Core package imported successfully")
         return True
     except ImportError as e:
@@ -20,7 +20,7 @@ def test_core_import():
 def test_intake_import():
     """Test intake module import."""
     try:
-        from generators.intake.v2 import tointake2
+        from tocatalogs.intake import v2
         print("✓ Intake module imported successfully")
         return True
     except ImportError as e:
@@ -32,7 +32,7 @@ def test_intake_import():
 def test_stac_import():
     """Test STAC module import."""
     try:
-        from generators.stac import create_collection
+        from tocatalogs.stac import create_collection
         print("✓ STAC module imported successfully")
         return True
     except ImportError as e:

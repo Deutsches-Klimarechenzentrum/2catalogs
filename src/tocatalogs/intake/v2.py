@@ -27,7 +27,7 @@ from tqdm import tqdm
 # Logging
 # -----------------------------------------------------------------------------
 
-logger = logging.getLogger("tointake2")
+logger = logging.getLogger("intake.v2")
 
 
 def setup_logging(level=logging.INFO):

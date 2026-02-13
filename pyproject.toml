@@ -40,8 +40,10 @@ intake = [
 # STAC-related dependencies
 stac = [
     "pystac",
+    "pystac-client",
     "xarray",
     "pandas",
+    "requests",
 ]
 
 # All optional dependencies
@@ -50,7 +52,9 @@ all = [
     "tqdm",
     "pandas",
     "pystac",
+    "pystac-client",
     "xarray",
+    "requests",
 ]
 
 # Development dependencies
@@ -92,7 +96,7 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["catalogs*", "generators*"]
+include = ["catalogs*", "tocatalogs*"]
 
 # Ruff configuration
 [tool.ruff]

@@ -51,9 +51,9 @@ jobs:
 
       - name: Test imports
         run: |
-          python -c "import generators" && echo "✓ generators import OK" || echo "✗ generators import failed"
-          python -c "import generators.intake.v2.tointake2" && echo "✓ tointake2 import OK" || echo "✗ tointake2 import failed"
-          python -c "import generators.stac" && echo "✓ stac import OK" || echo "✗ stac import failed"
+          python -c "import tocatalogs" && echo "✓ tocatalogs import OK" || echo "✗ tocatalogs import failed"
+          python -c "import tocatalogs.intake.v2" && echo "✓ intake.v2 import OK" || echo "✗ intake.v2 import failed"
+          python -c "import tocatalogs.stac" && echo "✓ stac import OK" || echo "✗ stac import failed"
 
       - name: Verify installation
         run: |
