@@ -131,7 +131,9 @@ def add_to_main_catalog(catalog_name: str, catalog_path: Path, fields: Dict[str,
         
         # Extract source info from generated catalog
         source_uri = fields.get('Source URI', '')
-        description = fields.get('Description', 'No description provided')
+        description = fields.get('Summary', fields.get('Description', 'No description provided'))
+        title = fields.get('Title', catalog_name)
+        license_info = fields.get('License', 'unknown')
         
         # Add entry to main catalog
         main_catalog['sources'][catalog_name] = {
@@ -141,6 +143,8 @@ def add_to_main_catalog(catalog_name: str, catalog_path: Path, fields: Dict[str,
                 'path': f'{{{{ CATALOG_DIR }}}}/generated/{catalog_name}.yaml'
             },
             'metadata': {
+                'title': title,
+                'license': license_info,
                 'source_uri': source_uri,
                 'added': datetime.now().date().isoformat(),
                 'issue': issue_number,
@@ -213,6 +217,12 @@ def run_intake_forge(fields: Dict[str, str], output_dir: Path) -> int:
         f.write(f"Source URI: {source_uri}\n")
         f.write(f"Output Name: {output_name}.yaml\n")
         f.write(f"Source Type: {source_type}\n")
+        if fields.get('Title'):
+            f.write(f"Title: {fields['Title']}\n")
+        if fields.get('Summary'):
+            f.write(f"Summary: {fields['Summary']}\n")
+        if fields.get('License'):
+            f.write(f"License: {fields['License']}\n")
         if fields.get('Description'):
             f.write(f"Description: {fields['Description']}\n")
         if additional_options:
@@ -220,9 +230,18 @@ def run_intake_forge(fields: Dict[str, str], output_dir: Path) -> int:
     
     print(f"Converting {source_uri} to Intake v2 catalog: {output_path}")
     
+    # Extract metadata from issue fields
+    catalog_metadata = {}
+    if 'Title' in fields:
+        catalog_metadata['title'] = fields['Title'].strip()
+    if 'Summary' in fields:
+        catalog_metadata['description'] = fields['Summary'].strip()
+    if 'License' in fields:
+        catalog_metadata['license'] = fields['License'].strip()
+    
     try:
-        # Call convert_to_intake2 directly instead of subprocess
-        convert_to_intake2([source_uri], output_path)
+        # Call convert_to_intake2 directly with metadata
+        convert_to_intake2([source_uri], output_path, catalog_metadata=catalog_metadata)
         
         print(f"✓ Successfully created catalog: {output_path}")
         return 0
