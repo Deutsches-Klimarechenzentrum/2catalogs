@@ -9,14 +9,9 @@ Welcome to 2catalogs Documentation
 
    README
    COMMUNITY_CATALOG
-   FORGE
-   FORGE_QUICKSTART
-   FORGE_ARCHITECTURE
-   FORGE_SUMMARY
-   FORGE_EXAMPLES
-   FORGE_CHECKLIST
+   forge/index
    MERGE_REQUEST_WORKFLOW
-   ci/README
+   ci/index
 
 Overview
 --------
@@ -37,10 +32,9 @@ Documentation Sections
 ----------------------
 
 * :doc:`README` - Project overview and getting started
-* :doc:`FORGE` - Complete Forge documentation
-* :doc:`FORGE_QUICKSTART` - Quick start guide for Forge
+* :doc:`forge/index` - Complete Forge system documentation
 * :doc:`COMMUNITY_CATALOG` - Community catalog information
-* :doc:`ci/README` - CI/CD architecture and guides
+* :doc:`ci/index` - CI/CD architecture and guides
 
 Quick Links
 -----------
