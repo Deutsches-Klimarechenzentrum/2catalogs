@@ -8,6 +8,7 @@ import json
 from .utils.defaults import *
 
 HOSTURL="https://stac2.cloud.dkrz.de/fastapi"
+HOSTURL="https://2catalogs-bcb301.gitlab-pages.dkrz.de/catalog/"
 L_API=True
 #HOSTURL="https://s3.eu-dkrz-1.dkrz.cloud"
 JUPYTERLITE="https://swift.dkrz.de/v1/dkrz_7fa6baba-db43-4d12-a295-8e3ebb1a01ed/apps/jupyterlite/index.html"

@@ -6,6 +6,18 @@ body:
   - type: markdown
     attributes:
       value: |
+        ## ⚠️ PUBLIC INPUT NOTICE
+        
+        **All information you provide in this issue has to be PUBLIC and will be visible to everyone.**
+        
+        This includes:
+        - Source URIs and data locations
+        - Collection IDs and descriptions
+        - Project, source, and experiment IDs
+        - Any other metadata you provide
+                
+        ---
+        
         ## STAC Catalog Generation Request
         
         This form will trigger an automated pipeline to generate a STAC (SpatioTemporal Asset Catalog) from your data.
@@ -27,81 +39,15 @@ body:
     id: collection-id
     attributes:
       label: Collection ID
-      description: Unique identifier for the STAC collection
-      placeholder: "eerie-icon-ngc4008"
-    validations:
-      required: true
+      description: "Collection Identifier of the form '<project_id>-<activity_id>-<institution_id>-<source_id>-<experiment_id>-<version_id>'"
+      placeholder: "cmip6_highresmip_mpi-esm1-2-hr_ssp585_r1i1p1f1_v20210101"
 
   - type: input
-    id: project-id
+    id: item-id
     attributes:
-      label: Project ID
-      description: Project identifier (e.g., EERIE, NextGEMS, COSMO)
-      placeholder: "EERIE"
-    validations:
-      required: true
-
-  - type: input
-    id: source-id
-    attributes:
-      label: Source ID (Model)
-      description: Model or source identifier
-      placeholder: "ICON"
-
-  - type: input
-    id: experiment-id
-    attributes:
-      label: Experiment ID
-      description: Experiment identifier
-      placeholder: "ngc4008"
-
-  - type: textarea
-    id: spatial-extent
-    attributes:
-      label: Spatial Extent
-      description: |
-        Bounding box for the data [west, south, east, north]
-        Leave empty for auto-detection
-      placeholder: "[-180, -90, 180, 90]"
-
-  - type: textarea
-    id: temporal-extent
-    attributes:
-      label: Temporal Extent
-      description: |
-        Time range for the data (ISO 8601 format)
-        Leave empty for auto-detection
-      placeholder: |
-        start: 2020-01-01T00:00:00Z
-        end: 2021-12-31T23:59:59Z
-
-  - type: textarea
-    id: description
-    attributes:
-      label: Collection Description
-      description: Detailed description of the dataset
-      placeholder: "High-resolution Earth System Model output from the EERIE project"
-    validations:
-      required: true
-
-  - type: input
-    id: stac-api-url
-    attributes:
-      label: STAC API URL (optional)
-      description: If provided, attempt to publish to this STAC API endpoint
-      placeholder: "https://stac.example.com/api"
-
-  - type: checkboxes
-    id: options
-    attributes:
-      label: Options
-      options:
-        - label: "Use EERIE Cloud template"
-          required: false
-        - label: "Generate preview thumbnails"
-          required: false
-        - label: "Include Kerchunk references"
-          required: false
+      label: Item ID
+      description: "Catalog entry i.e. dataset identifier. If not provided, it will be generated from the <Data Source URI>""
+      placeholder: "era5-land-hourly"
 
   - type: markdown
     attributes:

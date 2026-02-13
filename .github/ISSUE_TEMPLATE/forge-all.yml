@@ -6,6 +6,19 @@ body:
   - type: markdown
     attributes:
       value: |
+        ## ⚠️ PUBLIC INPUT NOTICE
+        
+        **All information you provide in this issue has to be PUBLIC and will be visible to everyone.**
+        
+        This includes:
+        - Source URIs and data locations
+        - Collection/catalog IDs and descriptions
+        - Project, source, and experiment IDs
+        - License information
+        - Any other metadata you provide
+                
+        ---
+        
         ## Generate All Catalogs
         
         This form will trigger automated pipelines to generate both:

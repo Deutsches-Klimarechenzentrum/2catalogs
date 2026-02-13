@@ -1,8 +1,8 @@
-.. CI/CD Architecture
+.. Server-side: Git Continuous Integration (CI)
 
-================================
-CI/CD Architecture Overview
-================================
+============================================
+Server-side: Git Continuous Integration (CI)
+============================================
 
 The CI/CD workload is split between GitLab CI and GitHub Actions to optimize resources and leverage each platform's strengths.
 
@@ -45,21 +45,6 @@ Auto-commit                               ❌          ✅
 GitLab Pages Deployment                   ❌          ✅
 Conda Environment                         ❌          ✅
 ========================================  ==========  ==========
-
-Performance Improvements
-------------------------
-
-**Before Split:**
-
-- GitLab: ~490 lines, 18+ jobs across 6 stages
-- GitHub: ~164 lines, 3 jobs
-- Combined: ~82 minutes per full run
-
-**After Split:**
-
-- GitLab: ~187 lines, 5 jobs (62% reduction)
-- GitHub: ~135 lines, 3 jobs (18% reduction)
-- Combined: ~51-56 minutes (30-35% savings)
 
 Trigger Conditions
 ------------------
@@ -119,25 +104,9 @@ Configuration Files
    └── .gitlab/scripts/
        └── forge_parser.py
 
-Best Practices
---------------
-
-**Do:**
-
-- ✅ Use GitHub for testing and quality checks
-- ✅ Use GitLab for forge operations
-- ✅ Keep code synced between platforms
-- ✅ Monitor both CI/CD dashboards
-
-**Don't:**
-
-- ❌ Run forge on GitHub (disabled)
-- ❌ Duplicate tests across platforms
-- ❌ Mix responsibilities
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :caption: Platform Details
 
     CI_GITLAB
-    CI_GITHUB

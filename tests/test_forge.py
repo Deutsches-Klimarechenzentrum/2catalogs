@@ -13,7 +13,9 @@ from pathlib import Path
 
 
 def create_intake_issue_body(uri: str, name: str, source_type: str = "Auto-detect", 
-                              description: str = "", options: str = "") -> str:
+                              description: str = "", options: str = "",
+                              title: str = "", summary: str = "", 
+                              license: str = "") -> str:
     """Create a simulated intake issue body."""
     body = f"""### Source URI
 {uri}
@@ -23,6 +25,24 @@ def create_intake_issue_body(uri: str, name: str, source_type: str = "Auto-detec
 
 ### Source Type
 {source_type}"""
+    
+    if title:
+        body += f"""
+
+### Title
+{title}"""
+    
+    if summary:
+        body += f"""
+
+### Summary
+{summary}"""
+    
+    if license:
+        body += f"""
+
+### License
+{license}"""
     
     if options:
         body += f"""

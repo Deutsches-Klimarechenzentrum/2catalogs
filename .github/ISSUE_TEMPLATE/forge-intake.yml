@@ -6,6 +6,18 @@ body:
   - type: markdown
     attributes:
       value: |
+        ## ⚠️ PUBLIC INPUT NOTICE
+        
+        **All information you provide in this issue has to be PUBLIC and will be visible to everyone.**
+        
+        This includes:
+        - Source URIs and data locations
+        - Catalog names and descriptions
+        - License information
+        - Any other metadata you provide
+                
+        ---
+        
         ## Intake v2 Catalog Generation Request
         
         This form will trigger an automated pipeline to convert your data source into an Intake v2 catalog.
@@ -33,29 +45,41 @@ body:
     validations:
       required: true
 
-
   - type: input
     id: main-catalog-entry
     attributes:
-      label: Desired Name in Main Catalog (if public)
-      description: If you want this catalog published, what should the entry be called in the central catalog?
-      placeholder: "my-intake-catalog"
+      label: Desired Name in Main Catalog
+      description: What should the entry be called in the central catalog?
+      placeholder: "era5"
+    validations:
+      required: true
 
   - type: textarea
-    id: description
+    id: title
     attributes:
-      label: Description
-      description: Brief description of the dataset or catalog
+      label: Title
+      description: Short phrase or sentence describing the dataset
       placeholder: "Earth System Model output data from PROJECT X"
+    validations:
+      required: true
 
-  - type: checkboxes
-    id: public
+  - type: textarea
+    id: summary
     attributes:
-      label: Visibility
-      description: Should the generated catalog be publicly accessible?
-      options:
-        - label: "Make this catalog publicly accessible"
-          required: false
+      label: Summary
+      description: Paragraph describing the dataset or catalog
+      placeholder: "This dataset contains Earth System Model output data from PROJECT X, including variables such as temperature, precipitation, and wind speed. The data is organized in a hierarchical structure with metadata describing each variable and its dimensions."
+    validations:
+      required: true
+
+  - type: textarea
+    id: license
+    attributes:
+      label: License
+      description: https://spdx.org/licenses/
+      placeholder: "CC-BY-4.0"
+    validations:
+      required: true
 
   - type: markdown
     attributes:

@@ -378,9 +378,14 @@ def handle_intake1_yaml(
 # Main conversion logic
 # -----------------------------------------------------------------------------
 
-def convert_to_intake2(inputs: list[str], output: str | None):
+def convert_to_intake2(inputs: list[str], output: str | None, catalog_metadata: dict | None = None):
     """
     Convert inputs into an Intake v2 catalog.
+    
+    Args:
+        inputs: List of input paths/URIs to convert
+        output: Output path for the catalog YAML file
+        catalog_metadata: Optional metadata dict with keys: title, description, license
     """
     if output is None:
         output = "intake2.yaml"
@@ -393,6 +398,15 @@ def convert_to_intake2(inputs: list[str], output: str | None):
     else:
         logger.info("Creating new catalog")
         outcat = intake.entry.Catalog()
+    
+    # Set catalog-level metadata if provided
+    if catalog_metadata:
+        if 'title' in catalog_metadata:
+            outcat.metadata['title'] = catalog_metadata['title']
+        if 'description' in catalog_metadata:
+            outcat.metadata['description'] = catalog_metadata['description']
+        if 'license' in catalog_metadata:
+            outcat.metadata['license'] = catalog_metadata['license']
 
     for inp in inputs:
         logger.info("Processing input '%s'", inp)

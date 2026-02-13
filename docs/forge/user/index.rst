@@ -1,7 +1,7 @@
-.. Forge User Guide
+.. User Guide
 
 =====================
-Forge User Guide
+User Guide
 =====================
 
 The Forge system automatically generates catalogs through GitHub Issues. No installation required!
