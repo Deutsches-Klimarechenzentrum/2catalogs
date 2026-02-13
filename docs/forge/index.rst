@@ -27,5 +27,6 @@ Start with the :doc:`FORGE_QUICKSTART` guide for a quick introduction, or read t
 .. toctree::
    :maxdepth: 4
    :caption: Forge Documentation
+   
    user/index
    server/index

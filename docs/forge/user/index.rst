@@ -6,10 +6,6 @@ Forge User Guide
 
 The Forge system automatically generates catalogs through GitHub Issues. No installation required!
 
-.. contents:: Table of Contents
-   :local:
-   :depth: 2
-
 Quick Start
 ===========
 
@@ -366,3 +362,9 @@ Architecture
 For technical details about how the forge works, see :doc:`FORGE_ARCHITECTURE`.
 
 For CI/CD server configuration, see :doc:`../server/index`.
+
+.. toctree::
+   :maxdepth: 4
+   :caption: Forge Documentation
+   
+   FORGE_ARCHITECTURE
