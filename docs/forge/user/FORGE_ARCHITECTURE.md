@@ -20,6 +20,14 @@ graph TB
     A -->|Stored| S[GitHub Storage]
     W -->|Comments| GH
     S -->|Download| User
+    A -->|Triggers| GL[GitLab CI Pipeline]
+    GL -->|Creates| MR[Merge Request]
+    MR -->|Merged| REPO[Repository Updated]
+    GL -->|Posts Link| GH
+    
+    style GL fill:#FCA326
+    style MR fill:#FCA326
+    style REPO fill:#6CB33F
 ```
 
 ### 1. Issue Templates
@@ -206,6 +214,43 @@ python tests/test_forge.py stac --uri <url> --collection <id> --project <id>
    ↓
 11. User reviews error log
 ```
+
+## GitLab Integration
+
+When configured, the forge integrates with GitLab CI to automatically create merge requests:
+
+### Workflow
+
+```
+1. GitHub Actions completes forge generation
+   ↓
+2. Artifact uploaded to GitHub
+   ↓
+3. GitLab pipeline triggered (configured with webhooks or polling)
+   ↓
+4. GitLab CI downloads artifact from GitHub
+   ↓
+5. Forge creates merge request with catalog changes
+   ↓
+6. GitLab posts MR link to GitHub issue
+   ↓
+7. User reviews and merges MR
+   ↓
+8. Catalog integrated into repository
+```
+
+### Components
+
+**GitLab CI Jobs:**
+- `.forge_create_mr` - Downloads artifacts and creates merge request
+- `forge:create-merge-request` - Main job that executes the integration
+
+**Required Variables:**
+- `GITHUB_TOKEN` - Access to download artifacts
+- `GITLAB_TOKEN` - Permission to create merge requests
+- `CI_PROJECT_ID` - GitLab project identifier
+
+**See:** [`docs/forge/server/CI_GITLAB.md`](../server/CI_GITLAB.md) for configuration details
 
 ## Security Model
 
