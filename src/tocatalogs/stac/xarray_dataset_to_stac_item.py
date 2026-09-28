@@ -632,6 +632,7 @@ def get_item_from_source(
     providers=get_providers(ds_attrs)
     license=get_spdx_license(exp_license)
     cube=get_cube_extension(ds, ds_attrs["time_min"],ds_attrs["time_max"])    
+    print(cube)
     
     properties={
         "title": title,
