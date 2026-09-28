@@ -344,7 +344,7 @@ def make_json_serializable(obj):
 def get_item_id(ds:xr.Dataset,ds_attrs:dict,l_eeriecloud:bool)->str:
     global ID_TEMPLATE
     if l_eeriecloud:
-        if not ds_attrs["_xpublish_id"]:
+        if not ds_attrs.get("_xpublish_id"):
             raise ValueError(
                 "You set l_eeriecloud=True but there is no '_xpublish_id' attribute found which would be used as ID"
             )
@@ -369,7 +369,7 @@ def xarray_dataset_to_stac_item(
     asset_access="dkrz-disk",
     l_eeriecloud:bool=False,
     l_cubeextension:bool=True,
-    l_gridlook:bool=True
+    l_gridlook:bool=False
 ) -> Item:
 
     if ds_format not in ["zarr", "kerchunk", "netcdf"]:
