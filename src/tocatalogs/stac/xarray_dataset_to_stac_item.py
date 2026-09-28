@@ -464,7 +464,7 @@ def xarray_dataset_to_stac_item(
                 asset_access,
                 Asset(
                     href=href,
-                    media_type=MediaType.ZARR if ds_format in ["zarr", "kerchunk"] else MediaType.NetCDF,
+                    media_type=MediaType.ZARR if ds_format in ["zarr", "kerchunk"] else MediaType.NETCDF,
                     roles=["data"],
                     title=access_title,
                     description="Chunk-based access on raw data",
