@@ -30,7 +30,9 @@ dependencies = [
     "requests",
     "aiohttp",
     "xarray",
-    "pandas"
+    "pandas",
+    "zarr",
+    "netcdf4"
 ]
 
 [project.optional-dependencies]

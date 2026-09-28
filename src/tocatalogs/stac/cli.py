@@ -24,6 +24,9 @@ def main():
     try:
         # Load the dataset
         if args.engine in ["zarr", "kerchunk", "h5netcdf", "h5py", "netcdf4"]:
+            ds_format = "zarr"
+            if args.engine in ["h5netcdf", "h5py", "netcdf4"]:
+                ds_format = "netcdf"
             ds = xr.open_dataset(args.input, engine=args.engine)
         else:
             raise ValueError(f"Unsupported engine: {args.engine}")
@@ -31,7 +34,7 @@ def main():
         # Generate the STAC item
         item = xarray_dataset_to_stac_item(
             ds=ds,
-            ds_format=args.engine,
+            ds_format=ds_format,
             item_id=args.item_id,
             collection_id=args.collection_id,
             exp_license=args.exp_license,
