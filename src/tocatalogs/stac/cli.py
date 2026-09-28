@@ -15,7 +15,7 @@ def main():
     parser.add_argument("--exp-license", help="SPDX license ID for the experiment.")
     parser.add_argument("--title", help="Title for the STAC item.")
     parser.add_argument("--asset-access", default="dkrz-disk", help="Name of the primary data asset (default: dkrz-disk).")
-    parser.add_argument("--l-eeriecloud", action="store_false", help="If also available via eerie.cloud specific features.")
+    parser.add_argument("--l-eeriecloud", action="store_true", help="If also available via eerie.cloud specific features.")
     parser.add_argument("--l-cubeextension", action="store_true", help="Enable cube: extension (default: True).")
     parser.add_argument("--l-gridlook", action="store_true", help="Enable gridlook asset (default: False).")
 
