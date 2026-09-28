@@ -43,7 +43,8 @@ intake = [
 # STAC-related dependencies
 stac = [
     "pystac",
-    "pystac-client"
+    "pystac-client",
+    "geopandas",
 ]
 
 # All optional dependencies
@@ -52,6 +53,7 @@ all = [
     "tqdm",
     "pystac",
     "pystac-client",
+    "geopandas",
 ]
 
 # Development dependencies
@@ -74,9 +76,9 @@ docs = [
     "sphinxcontrib-mermaid",
 ]
 
-[project.urls]
-Homepage = "https://github.com/yourusername/2catalogs"
-Repository = "https://github.com/yourusername/2catalogs"
+[project.scripts]
+tocatalog-intake2 = "tocatalogs.intake.v2:main"
+tocatalog-stac = "tocatalogs.stac.cli:main"
 
 # UV dependency groups (for uv sync --group)
 [dependency-groups]

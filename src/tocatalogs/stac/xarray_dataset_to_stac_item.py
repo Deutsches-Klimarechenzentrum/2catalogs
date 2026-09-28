@@ -372,8 +372,8 @@ def xarray_dataset_to_stac_item(
     l_gridlook:bool=True
 ) -> Item:
 
-    if ds_format != "zarr":
-        raise ValueError("No other formats than zarr yet implemented.")
+    if ds_format not in ["zarr", "kerchunk", "netcdf"]:
+        raise ValueError("Supported formats are zarr, kerchunk, netcdf.")
     #default
     stac_extensions=copy(STAC_EXTENSIONS)
     ds_attrs=get_from_attrs(copy(NEEDED_ATTRS),ds)
@@ -442,7 +442,8 @@ def xarray_dataset_to_stac_item(
 
     extra_fields={
         'Volume':str(int(ds.nbytes/1024**3)) + " GB uncompressed",
-        'No of data variables':str(len(ds.data_vars))
+        'No of data variables':str(len(ds.data_vars)),
+        'engine': ds_format
     }
     if href:
         open_kwargs=ds.attrs.get("open_kwargs")
@@ -463,7 +464,7 @@ def xarray_dataset_to_stac_item(
                 asset_access,
                 Asset(
                     href=href,
-                    media_type=MediaType.ZARR,
+                    media_type=MediaType.ZARR if ds_format in ["zarr", "kerchunk"] else MediaType.NetCDF,
                     roles=["data"],
                     title=access_title,
                     description="Chunk-based access on raw data",
