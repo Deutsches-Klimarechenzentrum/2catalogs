@@ -509,10 +509,12 @@ def xarray_dataset_to_stac_item(
     if l_cubeextension:
         itemdict["properties"].update(cube)
         
-    itemdict["properties"]["variables"]=list(itemdict["properties"]["cube:variables"].keys())
+    itemdict["properties"]["variables"]=list(ds.data_vars.keys())
     if "crs" in ds.variables:
-        zoomint=math.log2(int(ds["crs"].attrs["healpix_nside"]))
-        itemdict["properties"]["zoom"]=int(math.log2(int(ds["crs"].attrs["healpix_nside"])))
+        healpix_nside = ds["crs"].attrs.get("healpix_nside")
+        if healpix_nside:
+            zoomint=math.log2(int(healpix_nside))
+            itemdict["properties"]["zoom"]=int(zoomint)
         
     for dsatt,dsattval in ds.attrs.items():
         if not dsatt in itemdict["properties"] and not dsatt in itemdict and not "time" in dsatt.lower():
